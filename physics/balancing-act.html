@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>⚖️ 平衡跷跷板 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        /* 信息面板 */
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            max-width: 300px;
+            display: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #info-panel h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        #info-panel p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        #info-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        #info-panel .close-btn:hover {
+            opacity: 1;
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 状态指示器 */
+        #status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 力矩面板 */
+        #torque-panel {
+            position: fixed;
+            left: 20px;
+            top: calc(50% + 100px);
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 15px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            text-align: left;
+            min-width: 180px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #torque-panel h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .torque-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 6px 0;
+            font-size: 13px;
+        }
+
+        .torque-label {
+            opacity: 0.9;
+        }
+
+        .torque-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .torque-diff {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        #torque-diff {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* 完成奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: text-fade 1s ease-out 0.3s both;
+        }
+
+        @keyframes text-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+            animation: text-fade 1s ease-out 0.6s both;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+            animation: text-fade 1s ease-out 0.9s both;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        #loading .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>⚖️ 正在准备平衡实验...</p>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 动态提示 -->
+        <div id="hint">🌟 拖拽物体到跷跷板上，让它们保持平衡！</div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.reset()">🔄 重新开始</button>
+            <button class="control-btn" onclick="game.showHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- 状态指示器 -->
+        <div id="status-indicator">⚡ 开始吧！</div>
+    </div>
+
+    <!-- 力矩显示面板 -->
+    <div id="torque-panel">
+        <h3>⚖️ 力矩对比</h3>
+        <div class="torque-row">
+            <span class="torque-label">⬅️ 左侧:</span>
+            <span class="torque-value" id="left-torque">0</span>
+        </div>
+        <div class="torque-row">
+            <span class="torque-label">➡️ 右侧:</span>
+            <span class="torque-value" id="right-torque">0</span>
+        </div>
+        <div class="torque-diff">
+            差值: <span id="torque-diff">0</span>
+        </div>
+    </div>
+
+    <!-- 信息面板 -->
+    <div id="info-panel">
+        <button class="close-btn" onclick="game.closeInfoPanel()">×</button>
+        <h3 id="info-title">物体信息</h3>
+        <p id="info-mass"></p>
+        <p id="info-torque"></p>
+        <p id="info-fact"></p>
+    </div>
+
+    <!-- 完成奖励层 -->
+    <div id="reward-overlay">
+        <div id="medal">🏅</div>
+        <div id="reward-text">平衡大师</div>
+        <div id="reward-stats">
+            平衡次数: <span id="balanceCount">0</span><br>
+            总星星: <span id="totalStars">0</span>
+        </div>
+        <button id="restart-btn" onclick="game.restart()">继续实验</button>
+    </div>
+
+    <!-- 加载失败提示 -->
+    <div id="loading-error" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231, 76, 60, 0.9); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 1000;">
+        <h2>❌ 加载失败</h2>
+        <p>请刷新页面重试</p>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; background: white; color: #e74c3c;">刷新页面</button>
+    </div>
+
+    <script>
+        // 超时检测
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                loadingEl.style.display = 'none';
+                document.getElementById('loading-error').style.display = 'block';
+                console.error('加载超时');
+            }
+        }, 10000);
+    </script>
+
+    <script>
+        // ==================== 数据模型 ====================
+
+        const OBJECT_DATA = [
+            {
+                id: 1,
+                mass: 1,
+                color: '#e74c3c',
+                width: 40,
+                height: 40,
+                label: '1kg',
+                fact: '💡 1kg 大约是1升水的重量'
+            },
+            {
+                id: 2,
+                mass: 2,
+                color: '#3498db',
+                width: 50,
+                height: 50,
+                label: '2kg',
+                fact: '💡 2kg 大约是2袋大米的重量'
+            },
+            {
+                id: 3,
+                mass: 3,
+                color: '#27ae60',
+                width: 60,
+                height: 60,
+                label: '3kg',
+                fact: '💡 3kg 大约是3瓶大桶水的重量'
+            },
+            {
+                id: 4,
+                mass: 1,
+                color: '#e74c3c',
+                width: 40,
+                height: 40,
+                label: '1kg',
+                fact: '💡 1kg 大约是1升水的重量'
+            },
+            {
+                id: 5,
+                mass: 2,
+                color: '#3498db',
+                width: 50,
+                height: 50,
+                label: '2kg',
+                fact: '💡 2kg 大约是2袋大米的重量'
+            },
+            {
+                id: 6,
+                mass: 3,
+                color: '#27ae60',
+                width: 60,
+                height: 60,
+                label: '3kg',
+                fact: '💡 3kg 大约是3瓶大桶水的重量'
+            }
+        ];
+
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            objects: [],
+            draggingObject: null,
+            dragOffset: { x: 0, y: 0 },
+
+            // 游戏统计
+            balanceCount: 0,
+            currentStars: 0,
+            totalStars: 0,
+            isComplete: false,
+
+            // 画布
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+
+            // 跷跷板
+            seesaw: {
+                x: 0,
+                y: 0,
+                width: 500,
+                height: 20,
+                angle: 0,
+                targetAngle: 0
+            },
+
+            // 支点
+            fulcrum: {
+                x: 0,
+                y: 0,
+                baseWidth: 80,
+                height: 60
+            },
+
+            // 物体区域
+            objectAreaY: 0,
+            objectSpacing: 0
+        };
+
+        // ==================== 动态提示系统 ====================
+
+        const HintSystem = {
+            state: 'welcome',
+            hints: {
+                welcome: '🌟 拖拽物体到跷跷板上，让它们保持平衡！',
+                dragging: '👆 找到合适的位置，松开试试看！',
+                near_seesaw: '✨ 很接近跷跷板了！',
+                placed: '✅ 已放置在跷跷板上',
+                removed: '📦 已移回原位，可以重新放置',
+                balanced: '🎉 太棒了！跷跷板平衡了！',
+                unbalanced_left: '⬅️ 左边太重了，右边需要更多物体或放更远！',
+                unbalanced_right: '➡️ 右边太重了，左边需要更多物体或放更远！',
+                complete: '🏆 完美平衡！你获得了一颗星星！'
+            },
+
+            init() {
+                this.state = 'welcome';
+                this.renderHint();
+            },
+
+            setState(state) {
+                this.state = state;
+                this.renderHint();
+            },
+
+            renderHint() {
+                const hintEl = document.getElementById('hint');
+                hintEl.textContent = this.hints[this.state];
+                hintEl.style.animation = 'none';
+                hintEl.offsetHeight;
+                hintEl.style.animation = 'fadeIn 0.3s ease-in';
+            }
+        };
+
+        // ==================== 信息面板系统 ====================
+
+        const InfoPanel = {
+            panel: null,
+            timer: null,
+
+            init() {
+                this.panel = document.getElementById('info-panel');
+            },
+
+            show(obj) {
+                clearTimeout(this.timer);
+
+                document.getElementById('info-title').textContent = `📦 ${obj.label} 物体`;
+                document.getElementById('info-mass').textContent = `⚖️ 质量: ${obj.mass} kg`;
+                document.getElementById('info-fact').textContent = obj.fact;
+
+                const torque = obj.onSeesaw ? (obj.mass * obj.distance).toFixed(1) : '0';
+                document.getElementById('info-torque').textContent = `🔄 力矩: ${torque}`;
+
+                this.panel.style.display = 'block';
+                this.panel.style.animation = 'none';
+                this.panel.offsetHeight;
+                this.panel.style.animation = 'slideIn 0.3s ease-out';
+
+                this.timer = setTimeout(() => {
+                    this.hide();
+                }, 6000);
+            },
+
+            hide() {
+                this.panel.style.display = 'none';
+            }
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playSnap() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 600;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.3);
+            },
+
+            playComplete() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            },
+
+            playHover() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.15);
+            },
+
+            playRemove() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 250;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.2);
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 初始化系统
+                HintSystem.init();
+                InfoPanel.init();
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 初始化物体
+                this.initObjects();
+
+                // 绑定事件
+                this.bindEvents();
+
+                // 创建星星
+                this.createStars();
+
+                // 加载总星数
+                this.loadStars();
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
+                }, 800);
+
+                // 开始渲染
+                this.startRenderLoop();
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+
+                GameState.seesaw.x = GameState.width / 2;
+                GameState.seesaw.y = GameState.height * 0.45;
+
+                GameState.fulcrum.x = GameState.width / 2;
+                GameState.fulcrum.y = GameState.height * 0.48;
+
+                GameState.objectAreaY = GameState.height * 0.85;
+                GameState.objectSpacing = GameState.width / (OBJECT_DATA.length + 1);
+
+                this.initObjects();
+            },
+
+            initObjects() {
+                GameState.objects = OBJECT_DATA.map((data, index) => {
+                    const obj = {
+                        ...data,
+                        x: GameState.objectSpacing * (index + 1),
+                        y: GameState.objectAreaY,
+                        originalX: GameState.objectSpacing * (index + 1),
+                        originalY: GameState.objectAreaY,
+                        isDragging: false,
+                        onSeesaw: false,
+                        side: null,
+                        distance: 0,
+                        angle: 0
+                    };
+                    return obj;
+                });
+
+                GameState.seesaw.angle = 0;
+                GameState.seesaw.targetAngle = 0;
+                GameState.isComplete = false;
+            },
+
+            bindEvents() {
+                const canvas = GameState.canvas;
+
+                canvas.addEventListener('mousedown', (e) => this.handleStart(e.clientX, e.clientY));
+                canvas.addEventListener('mousemove', (e) => this.handleMove(e.clientX, e.clientY));
+                canvas.addEventListener('mouseup', () => this.handleEnd());
+                canvas.addEventListener('mouseleave', () => this.handleEnd());
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleStart(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleMove(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.handleEnd();
+                });
+            },
+
+            handleStart(x, y) {
+                if (GameState.isComplete) return;
+
+                for (let i = GameState.objects.length - 1; i >= 0; i--) {
+                    const obj = GameState.objects[i];
+
+                    // 现在允许拖拽已经在跷跷板上的物体
+                    const distance = Math.sqrt((x - obj.x) ** 2 + (y - obj.y) ** 2);
+
+                    if (distance <= obj.width / 2) {
+                        GameState.draggingObject = obj;
+                        obj.isDragging = true;
+
+                        // 把物体移到数组末尾（最上层）
+                        GameState.objects.splice(i, 1);
+                        GameState.objects.push(obj);
+
+                        // 播放悬停音效
+                        AudioEngine.playHover();
+
+                        HintSystem.setState('dragging');
+                        break;
+                    }
+                }
+            },
+
+            handleMove(x, y) {
+                if (!GameState.draggingObject) return;
+
+                const obj = GameState.draggingObject;
+                obj.x = x;
+                obj.y = y;
+
+                // 检查是否靠近跷跷板
+                const seesawTopY = GameState.seesaw.y - GameState.seesaw.height / 2;
+                if (Math.abs(obj.y - seesawTopY) < 60) {
+                    HintSystem.setState('near_seesaw');
+                } else {
+                    HintSystem.setState('dragging');
+                }
+            },
+
+            handleEnd() {
+                if (!GameState.draggingObject) return;
+
+                const obj = GameState.draggingObject;
+                const seesaw = GameState.seesaw;
+                const seesawTopY = seesaw.y - seesaw.height / 2;
+                const distanceFromCenter = obj.x - seesaw.x;
+                const absDistance = Math.abs(distanceFromCenter);
+
+                if (Math.abs(obj.y - seesawTopY) < 60 && absDistance >= 25 && absDistance <= 250) {
+                    // 放在跷跷板上
+                    obj.onSeesaw = true;
+                    obj.side = distanceFromCenter < 0 ? 'left' : 'right';
+                    obj.distance = Math.round(absDistance / 25) * 25;
+                    obj.distance = Math.max(25, Math.min(250, obj.distance));
+
+                    // 计算初始角度
+                    obj.angle = Math.atan2(obj.y - seesaw.y, obj.x - seesaw.x);
+
+                    AudioEngine.playSnap();
+                    HintSystem.setState('placed');
+                    InfoPanel.show(obj);
+                    this.checkBalance();
+                } else if (obj.y > GameState.objectAreaY - 100) {
+                    // 拖回到底部物体区域，移回原位
+                    obj.onSeesaw = false;
+                    obj.side = null;
+                    obj.distance = 0;
+                    obj.x = obj.originalX;
+                    obj.y = obj.originalY;
+
+                    AudioEngine.playRemove();
+                    HintSystem.setState('removed');
+                    this.checkBalance();
+                } else {
+                    // 没放在跷跷板上也没拖回原位，根据之前的状态决定
+                    if (obj.onSeesaw) {
+                        // 原来在跷跷板上，保持原位
+                        // 位置会在 update() 中自动更新
+                    } else {
+                        // 原来不在跷跷板上，回到初始位置
+                        obj.x = obj.originalX;
+                        obj.y = obj.originalY;
+                    }
+                }
+
+                obj.isDragging = false;
+                GameState.draggingObject = null;
+            },
+
+            checkBalance() {
+                let leftTorque = 0;
+                let rightTorque = 0;
+                let objectsOnSeesaw = 0;
+
+                GameState.objects.forEach(obj => {
+                    if (obj.onSeesaw) {
+                        const torque = obj.mass * obj.distance;
+                        if (obj.side === 'left') {
+                            leftTorque += torque;
+                        } else {
+                            rightTorque += torque;
+                        }
+                        objectsOnSeesaw++;
+                    }
+                });
+
+                // 更新力矩显示
+                document.getElementById('left-torque').textContent = Math.round(leftTorque);
+                document.getElementById('right-torque').textContent = Math.round(rightTorque);
+                document.getElementById('torque-diff').textContent = Math.abs(Math.round(leftTorque - rightTorque));
+
+                if (objectsOnSeesaw === 0) {
+                    document.getElementById('status-indicator').textContent = '⚡ 开始吧！';
+                    document.getElementById('status-indicator').style.color = 'white';
+                    HintSystem.setState('welcome');
+                    GameState.isComplete = false;
+                    return;
+                }
+
+                // 计算目标角度
+                const torqueDiff = rightTorque - leftTorque;
+                GameState.seesaw.targetAngle = torqueDiff * 3;
+                GameState.seesaw.targetAngle = Math.max(-15, Math.min(15, GameState.seesaw.targetAngle));
+
+                // 检查是否平衡
+                const diff = Math.abs(leftTorque - rightTorque);
+                const statusEl = document.getElementById('status-indicator');
+
+                if (diff < 10 && objectsOnSeesaw >= 2) {
+                    statusEl.textContent = '✨ 完美平衡！';
+                    statusEl.style.color = '#27ae60';
+                    HintSystem.setState('balanced');
+
+                    if (!GameState.isComplete) {
+                        GameState.isComplete = true;
+                        GameState.balanceCount++;
+                        GameState.currentStars++;
+                        GameState.totalStars++;
+
+                        document.getElementById('balanceCount').textContent = GameState.balanceCount;
+                        document.getElementById('starCount').textContent = GameState.currentStars;
+                        document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                        // 保存到 localStorage
+                        localStorage.setItem('totalStars', GameState.totalStars.toString());
+
+                        setTimeout(() => {
+                            this.showReward();
+                        }, 800);
+                    }
+                } else {
+                    GameState.isComplete = false;
+                    if (leftTorque > rightTorque) {
+                        statusEl.textContent = '⬅️ 左边太重了';
+                        statusEl.style.color = '#e74c3c';
+                        HintSystem.setState('unbalanced_left');
+                    } else {
+                        statusEl.textContent = '➡️ 右边太重了';
+                        statusEl.style.color = '#e74c3c';
+                        HintSystem.setState('unbalanced_right');
+                    }
+                }
+            },
+
+            showReward() {
+                AudioEngine.playComplete();
+
+                const overlay = document.getElementById('reward-overlay');
+                overlay.style.display = 'flex';
+                HintSystem.setState('complete');
+            },
+
+            restart() {
+                document.getElementById('reward-overlay').style.display = 'none';
+                this.initObjects();
+                HintSystem.setState('welcome');
+                document.getElementById('status-indicator').textContent = '⚡ 开始吧！';
+                document.getElementById('status-indicator').style.color = 'white';
+            },
+
+            reset() {
+                this.restart();
+            },
+
+            showHint() {
+                alert('💡 提示：\n\n力矩 = 质量 × 距离\n\n要让跷跷板平衡，左边的力矩要等于右边的力矩！\n\n例如：\n- 左边放 2kg 的物体在距离 50 的位置（力矩 = 2 × 50 = 100）\n- 右边放 1kg 的物体在距离 100 的位置（力矩 = 1 × 100 = 100）\n- 这样就平衡了！');
+            },
+
+            closeInfoPanel() {
+                InfoPanel.hide();
+            },
+
+            loadStars() {
+                const totalStars = localStorage.getItem('totalStars') || '0';
+                GameState.totalStars = parseInt(totalStars);
+                document.getElementById('totalStars').textContent = totalStars;
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                    container.appendChild(star);
+                }
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.update();
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            update() {
+                // 平滑过渡角度
+                const seesaw = GameState.seesaw;
+                seesaw.angle += (seesaw.targetAngle - seesaw.angle) * 0.1;
+
+                // 更新物体位置
+                GameState.objects.forEach(obj => {
+                    if (obj.onSeesaw && !obj.isDragging) {
+                        // 在跷跷板上的物体，根据角度更新位置
+                        const rad = seesaw.angle * Math.PI / 180;
+                        const side = obj.side === 'left' ? -1 : 1;
+                        const dist = obj.distance;
+
+                        obj.x = seesaw.x + side * dist * Math.cos(rad);
+                        obj.y = seesaw.y + side * dist * Math.sin(rad) - obj.height / 2 - seesaw.height / 2;
+                    } else if (!obj.onSeesaw && !obj.isDragging) {
+                        // 不在跷跷板上的物体，回到原位（平滑过渡）
+                        const dx = obj.originalX - obj.x;
+                        const dy = obj.originalY - obj.y;
+
+                        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                            obj.x += dx * 0.15;
+                            obj.y += dy * 0.15;
+                        } else {
+                            obj.x = obj.originalX;
+                            obj.y = obj.originalY;
+                        }
+                    }
+                });
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                this.drawBackground(ctx, width, height);
+                this.drawFulcrum(ctx);
+                this.drawSeesaw(ctx);
+                this.drawObjects(ctx);
+            },
+
+            drawBackground(ctx, width, height) {
+                // 草地
+                ctx.fillStyle = '#90EE90';
+                ctx.fillRect(0, height * 0.8, width, height * 0.2);
+
+                // 天空
+                const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.8);
+                skyGradient.addColorStop(0, '#87CEEB');
+                skyGradient.addColorStop(1, '#E0F7FA');
+                ctx.fillStyle = skyGradient;
+                ctx.fillRect(0, 0, width, height * 0.8);
+
+                // 太阳
+                ctx.beginPath();
+                ctx.arc(width * 0.85, 100, 50, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFD700';
+                ctx.fill();
+
+                // 太阳光芒
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i * 30) * Math.PI / 180;
+                    ctx.beginPath();
+                    ctx.moveTo(width * 0.85 + 60 * Math.cos(angle), 100 + 60 * Math.sin(angle));
+                    ctx.lineTo(width * 0.85 + 80 * Math.cos(angle), 100 + 80 * Math.sin(angle));
+                    ctx.stroke();
+                }
+            },
+
+            drawFulcrum(ctx) {
+                const fulcrum = GameState.fulcrum;
+
+                ctx.beginPath();
+                ctx.moveTo(fulcrum.x - fulcrum.baseWidth / 2, fulcrum.y + fulcrum.height);
+                ctx.lineTo(fulcrum.x + fulcrum.baseWidth / 2, fulcrum.y + fulcrum.height);
+                ctx.lineTo(fulcrum.x, fulcrum.y);
+                ctx.closePath();
+                ctx.fillStyle = '#8B4513';
+                ctx.fill();
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            },
+
+            drawSeesaw(ctx) {
+                const seesaw = GameState.seesaw;
+
+                ctx.save();
+                ctx.translate(seesaw.x, seesaw.y);
+                ctx.rotate(seesaw.angle * Math.PI / 180);
+
+                // 跷跷板板子
+                ctx.fillStyle = '#DEB887';
+                ctx.fillRect(-seesaw.width / 2, -seesaw.height / 2, seesaw.width, seesaw.height);
+
+                // 边框
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-seesaw.width / 2, -seesaw.height / 2, seesaw.width, seesaw.height);
+
+                // 中心点
+                ctx.beginPath();
+                ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#654321';
+                ctx.fill();
+
+                // 刻度
+                ctx.fillStyle = '#654321';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                for (let i = 1; i <= 5; i++) {
+                    // 左侧刻度
+                    ctx.beginPath();
+                    ctx.arc(-i * 50, 0, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillText(i * 50 + '', -i * 50, -8);
+
+                    // 右侧刻度
+                    ctx.beginPath();
+                    ctx.arc(i * 50, 0, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillText(i * 50 + '', i * 50, -8);
+                }
+
+                ctx.restore();
+            },
+
+            drawObjects(ctx) {
+                GameState.objects.forEach(obj => {
+                    ctx.save();
+
+                    // 绘制阴影
+                    if (obj.isDragging) {
+                        ctx.beginPath();
+                        ctx.arc(obj.x + 5, obj.y + 5, obj.width / 2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                        ctx.fill();
+                    }
+
+                    // 绘制物体（圆形）
+                    ctx.beginPath();
+                    ctx.arc(obj.x, obj.y, obj.width / 2, 0, Math.PI * 2);
+
+                    const gradient = ctx.createRadialGradient(
+                        obj.x - obj.width / 6,
+                        obj.y - obj.width / 6,
+                        0,
+                        obj.x, obj.y, obj.width / 2
+                    );
+                    gradient.addColorStop(0, this.lightenColor(obj.color, 40));
+                    gradient.addColorStop(1, obj.color);
+
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // 边框
+                    ctx.strokeStyle = obj.onSeesaw ? '#00ff00' : 'rgba(255, 255, 255, 0.6)';
+                    ctx.lineWidth = obj.onSeesaw ? 3 : 2;
+                    ctx.stroke();
+
+                    // 标签
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(obj.label, obj.x, obj.y);
+
+                    ctx.restore();
+                });
+            },
+
+            lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.min(255, (num >> 16) + amt);
+                const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+                const B = Math.min(255, (num & 0x0000FF) + amt);
+                return `rgb(${R}, ${G}, ${B})`;
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，开始初始化游戏...');
+            try {
+                game.init();
+                console.log('游戏初始化成功！');
+            } catch (error) {
+                console.error('游戏初始化失败:', error);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                document.getElementById('loading-error').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

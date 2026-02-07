@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>缓存测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a3e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+        .test-result {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 缓存测试</h1>
+        <div class="test-result">
+            <p id="result">正在检测...</p>
+        </div>
+        <button class="btn" onclick="location.href='mathematics/area-builder.html?' + Date.now()">
+            🔄 强制刷新面积建造者
+        </button>
+    </div>
+
+    <script>
+        // 检测文件版本
+        const testVersion = () => {
+            // 尝试加载 area-builder.html
+            fetch('mathematics/area-builder.html?t=' + Date.now())
+                .then(response => response.text())
+                .then(html => {
+                    // 检查是否有修复的代码
+                    const hasDrawUIParams = html.includes('drawUI(ctx, width, height)');
+                    const hasBlockNumbers = html.includes('绘制序号');
+                    const hasBlockLogs = html.includes('绘制方块，共');
+
+                    const resultEl = document.getElementById('result');
+
+                    if (hasDrawUIParams && hasBlockNumbers && hasBlockLogs) {
+                        resultEl.innerHTML = '✅ <span class="success">文件已修复！</span><br><br><small>• drawUI 有参数<br>• 有方块序号<br>• 有调试日志</small>';
+                    } else {
+                        resultEl.innerHTML = '❌ <span class="error">文件还是旧版本！</span><br><br><small>' +
+                            (hasDrawUIParams ? '✓' : '✗') + ' drawUI 有参数<br>' +
+                            (hasBlockNumbers ? '✓' : '✗') + ' 有方块序号<br>' +
+                            (hasBlockLogs ? '✓' : '✗') + ' 有调试日志</small>';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('result').innerHTML = '❌ <span class="error">加载失败: ' + err.message + '</span>';
+                });
+        };
+
+        testVersion();
+    </script>
+</body>
+</html>

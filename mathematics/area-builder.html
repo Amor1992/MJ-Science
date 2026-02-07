@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📐 面积建造者 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        .control-btn.active {
+            background: rgba(76, 175, 80, 0.8);
+            border-color: rgba(76, 175, 80, 1);
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 信息面板 */
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            max-width: 300px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #info-panel h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #info-panel p {
+            margin: 10px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        #info-panel .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        /* 挑战面板 */
+        #challenge-panel {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            display: none;
+            min-width: 300px;
+        }
+
+        #challenge-panel h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        #challenge-target {
+            font-size: 32px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* 完成奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: text-fade 1s ease-out 0.3s both;
+        }
+
+        @keyframes text-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+            animation: text-fade 1s ease-out 0.6s both;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+            animation: text-fade 1s ease-out 0.9s both;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        #loading .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>📐 正在准备建造实验...</p>
+    </div>
+
+    <!-- 加载失败提示 -->
+    <div id="loading-error" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231, 76, 60, 0.9); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 1000;">
+        <h2>❌ 加载失败</h2>
+        <p>请刷新页面重试</p>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; background: white; color: #e74c3c;">刷新页面</button>
+    </div>
+
+    <script>
+        // 超时检测
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                loadingEl.style.display = 'none';
+                document.getElementById('loading-error').style.display = 'block';
+            }
+        }, 10000);
+    </script>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 动态提示 -->
+        <div id="hint">🌟 点击网格来建造形状，探索面积和周长！</div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.toggleMode()" id="mode-btn">🎨 自由模式</button>
+            <button class="control-btn" onclick="game.toggleChallenge()" id="challenge-btn">🎯 挑战模式</button>
+            <button class="control-btn" onclick="game.reset()">🔄 清空画布</button>
+            <button class="control-btn" onclick="game.showHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 挑战面板 -->
+        <div id="challenge-panel">
+            <h3>🎯 挑战目标</h3>
+            <div id="challenge-target">面积: 0</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%;">0%</div>
+            </div>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- 信息面板 -->
+        <div id="info-panel">
+            <h3>📊 当前统计</h3>
+            <p>📏 面积: <span class="stat-value" id="current-area">0</span> 个方块</p>
+            <p>📐 周长: <span class="stat-value" id="current-perimeter">0</span> 条边</p>
+            <p style="margin-top: 15px; font-size: 14px; opacity: 0.8;">💡 面积是内部方块数，周长是外边总长度</p>
+        </div>
+    </div>
+
+    <!-- 完成奖励层 -->
+    <div id="reward-overlay">
+        <div id="medal">🏅</div>
+        <div id="reward-text">建造大师</div>
+        <div id="reward-stats">
+            挑战完成: <span id="challengeCount">0</span><br>
+            总星星: <span id="totalStars">0</span>
+        </div>
+        <button id="restart-btn" onclick="game.restart()">继续挑战</button>
+    </div>
+
+    <script>
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+
+            // 网格设置
+            gridSize: 30,
+            gridX: 0,
+            gridY: 0,
+            gridCols: 0,
+            gridRows: 0,
+
+            // 鼠标位置
+            mouseX: -1,
+            mouseY: -1,
+            hoverGridX: -1,
+            hoverGridY: -1,
+
+            // 建造的数据
+            placedBlocks: [], // 存储已放置的方块坐标 {x, y, color}
+
+            // 模式设置
+            isChallengeMode: false,
+            currentChallenge: null,
+            challengeCompleted: false,
+
+            // 游戏统计
+            challengeCount: 0,
+            currentStars: 0,
+            totalStars: 0
+        };
+
+        // ==================== 挑战数据 ====================
+
+        const CHALLENGES = [
+            {
+                targetArea: 4,
+                hint: '建造一个面积为 4 的形状（比如 2x2 的正方形）'
+            },
+            {
+                targetArea: 6,
+                hint: '建造一个面积为 6 的形状'
+            },
+            {
+                targetArea: 8,
+                hint: '建造一个面积为 8 的形状'
+            },
+            {
+                targetArea: 10,
+                hint: '建造一个面积为 10 的形状'
+            },
+            {
+                targetArea: 12,
+                hint: '建造一个面积为 12 的形状（试试长方形！）'
+            }
+        ];
+
+        const COLORS = ['#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6'];
+
+        // ==================== 动态提示系统 ====================
+
+        const HintSystem = {
+            state: 'welcome',
+            hints: {
+                welcome: '🌟 点击网格来建造形状，探索面积和周长！',
+                building: '👆 点击网格放置方块，创造你的形状',
+                challenge: '🎯 挑战模式：建造指定面积的形状！',
+                challenge_progress: '📈 继续加油，快到目标了！',
+                challenge_near: '🎯 很接近了，再加几个方块！',
+                complete: '🎉 太棒了！你完成了挑战！'
+            },
+
+            setState(state) {
+                this.state = state;
+                this.renderHint();
+            },
+
+            renderHint() {
+                const hintEl = document.getElementById('hint');
+                hintEl.textContent = this.hints[this.state];
+                hintEl.style.animation = 'none';
+                hintEl.offsetHeight;
+                hintEl.style.animation = 'fadeIn 0.3s ease-in';
+            }
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playPlace() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 500;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.2);
+            },
+
+            playRemove() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 300;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.2);
+            },
+
+            playComplete() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                if (!GameState.canvas) {
+                    return;
+                }
+
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 绑定事件
+                this.bindEvents();
+
+                // 创建星星
+                this.createStars();
+
+                // 加载总星数
+                this.loadStars();
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
+                }, 800);
+
+                // 开始渲染
+                this.startRenderLoop();
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+
+                // 计算网格位置和大小
+                GameState.gridSize = Math.min(40, Math.floor(Math.min(GameState.width * 0.6, GameState.height * 0.5) / 15));
+
+                GameState.gridCols = 15;
+                GameState.gridRows = 12;
+
+                GameState.gridX = (GameState.width - GameState.gridCols * GameState.gridSize) / 2;
+                GameState.gridY = (GameState.height - GameState.gridRows * GameState.gridSize) / 2 + 30;
+
+                // 清空已放置的方块
+                this.clearBlocks();
+            },
+
+            bindEvents() {
+                const canvas = GameState.canvas;
+
+                canvas.addEventListener('mousedown', (e) => this.handleClick(e.clientX, e.clientY));
+                canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e.clientX, e.clientY));
+                canvas.addEventListener('mouseleave', () => {
+                    GameState.mouseX = -1;
+                    GameState.mouseY = -1;
+                    GameState.hoverGridX = -1;
+                    GameState.hoverGridY = -1;
+                });
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleClick(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleMouseMove(touch.clientX, touch.clientY);
+                }, { passive: false });
+            },
+
+            handleMouseMove(screenX, screenY) {
+                const rect = GameState.canvas.getBoundingClientRect();
+                GameState.mouseX = screenX - rect.left;
+                GameState.mouseY = screenY - rect.top;
+
+                // 计算悬停的网格坐标
+                const gridX = Math.floor((GameState.mouseX - GameState.gridX) / GameState.gridSize);
+                const gridY = Math.floor((GameState.mouseY - GameState.gridY) / GameState.gridSize);
+
+                // 检查是否在网格范围内
+                if (gridX >= 0 && gridX < GameState.gridCols && gridY >= 0 && gridY < GameState.gridRows) {
+                    GameState.hoverGridX = gridX;
+                    GameState.hoverGridY = gridY;
+                } else {
+                    GameState.hoverGridX = -1;
+                    GameState.hoverGridY = -1;
+                }
+            },
+
+            handleClick(screenX, screenY) {
+                if (GameState.isChallengeMode && GameState.challengeCompleted) return;
+
+                const rect = GameState.canvas.getBoundingClientRect();
+                const x = screenX - rect.left;
+                const y = screenY - rect.top;
+
+                // 计算点击的网格坐标
+                const gridX = Math.floor((x - GameState.gridX) / GameState.gridSize);
+                const gridY = Math.floor((y - GameState.gridY) / GameState.gridSize);
+
+                // 检查是否在网格范围内
+                if (gridX < 0 || gridX >= GameState.gridCols || gridY < 0 || gridY >= GameState.gridRows) {
+                    return;
+                }
+
+                // 查找是否已有方块
+                const existingIndex = GameState.placedBlocks.findIndex(
+                    b => b.x === gridX && b.y === gridY
+                );
+
+                if (existingIndex !== -1) {
+                    // 移除方块
+                    GameState.placedBlocks.splice(existingIndex, 1);
+                    AudioEngine.playRemove();
+                } else {
+                    // 添加方块
+                    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    GameState.placedBlocks.push({
+                        x: gridX,
+                        y: gridY,
+                        color: color
+                    });
+                    AudioEngine.playPlace();
+                    HintSystem.setState('building');
+                }
+
+                this.updateStats();
+                this.checkChallenge();
+            },
+
+            calculateArea() {
+                return GameState.placedBlocks.length;
+            },
+
+            calculatePerimeter() {
+                if (GameState.placedBlocks.length === 0) {
+                    return 0;
+                }
+
+                const blockSet = new Set();
+                GameState.placedBlocks.forEach(block => {
+                    blockSet.add(`${block.x},${block.y}`);
+                });
+
+                let perimeter = 0;
+                let edgeDetails = [];
+
+                GameState.placedBlocks.forEach((block, index) => {
+                    const directions = [
+                        { dx: 1, dy: 0, name: '右' },   // 右
+                        { dx: -1, dy: 0, name: '左' },  // 左
+                        { dx: 0, dy: 1, name: '下' },   // 下
+                        { dx: 0, dy: -1, name: '上' }   // 上
+                    ];
+
+                    directions.forEach(dir => {
+                        const neighborKey = `${block.x + dir.dx},${block.y + dir.dy}`;
+                        const hasNeighbor = blockSet.has(neighborKey);
+
+                        if (!hasNeighbor) {
+                            perimeter++;
+                            edgeDetails.push({
+                                block: index + 1,
+                                direction: dir.name,
+                                position: `(${block.x},${block.y})`,
+                                edge: `向${dir.name}无邻居`
+                            });
+                        }
+                    });
+                });
+
+                return perimeter;
+            },
+
+            updateStats() {
+                const area = this.calculateArea();
+                const perimeter = this.calculatePerimeter();
+
+                document.getElementById('current-area').textContent = area;
+                document.getElementById('current-perimeter').textContent = perimeter;
+
+                // 更新进度条（挑战模式下）
+                if (GameState.isChallengeMode && GameState.currentChallenge) {
+                    const targetArea = GameState.currentChallenge.targetArea;
+                    const progress = Math.min(100, (area / targetArea) * 100);
+                    const progressFill = document.getElementById('progress-fill');
+                    progressFill.style.width = progress + '%';
+                    progressFill.textContent = Math.round(progress) + '%';
+
+                    // 根据进度改变颜色
+                    if (progress >= 100) {
+                        progressFill.style.background = 'linear-gradient(90deg, #27ae60 0%, #2ecc71 100%)';
+                    } else if (progress >= 80) {
+                        progressFill.style.background = 'linear-gradient(90deg, #f39c12 0%, #f1c40f 100%)';
+                    } else {
+                        progressFill.style.background = 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)';
+                    }
+                }
+            },
+
+            checkChallenge() {
+                if (!GameState.isChallengeMode || !GameState.currentChallenge) return;
+
+                const area = this.calculateArea();
+                const targetArea = GameState.currentChallenge.targetArea;
+
+                // 接近目标的提示
+                if (!GameState.challengeCompleted) {
+                    const progress = area / targetArea;
+
+                    if (progress >= 0.9 && area < targetArea) {
+                        HintSystem.setState('challenge_near');
+                    } else if (progress >= 0.5 && area < targetArea) {
+                        HintSystem.setState('challenge_progress');
+                    }
+                }
+
+                if (area === targetArea && !GameState.challengeCompleted) {
+                    GameState.challengeCompleted = true;
+                    GameState.challengeCount++;
+                    GameState.currentStars++;
+                    GameState.totalStars++;
+
+                    document.getElementById('challengeCount').textContent = GameState.challengeCount;
+                    document.getElementById('starCount').textContent = GameState.currentStars;
+                    document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                    // 保存到 localStorage
+                    localStorage.setItem('totalStars', GameState.totalStars.toString());
+
+                    setTimeout(() => {
+                        this.showReward();
+                    }, 800);
+                }
+            },
+
+            toggleMode() {
+                const btn = document.getElementById('mode-btn');
+                if (GameState.isChallengeMode) {
+                    // 切换到自由模式
+                    GameState.isChallengeMode = false;
+                    GameState.challengeCompleted = false;
+                    btn.textContent = '🎨 自由模式';
+                    document.getElementById('challenge-panel').style.display = 'none';
+                    HintSystem.setState('welcome');
+                } else {
+                    // 切换到挑战模式
+                    this.startChallenge();
+                }
+            },
+
+            toggleChallenge() {
+                if (!GameState.isChallengeMode) {
+                    this.startChallenge();
+                } else {
+                    // 下一个挑战
+                    this.nextChallenge();
+                }
+            },
+
+            startChallenge() {
+                GameState.isChallengeMode = true;
+                GameState.challengeCompleted = false;
+
+                // 随机选择一个挑战
+                GameState.currentChallenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+
+                document.getElementById('mode-btn').textContent = '🎯 挑战模式';
+                document.getElementById('challenge-panel').style.display = 'block';
+                document.getElementById('challenge-target').textContent = `面积: ${GameState.currentChallenge.targetArea}`;
+
+                this.clearBlocks();
+                HintSystem.setState('challenge');
+            },
+
+            nextChallenge() {
+                GameState.challengeCompleted = false;
+                GameState.currentChallenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+                document.getElementById('challenge-target').textContent = `面积: ${GameState.currentChallenge.targetArea}`;
+                this.clearBlocks();
+                HintSystem.setState('challenge');
+            },
+
+            clearBlocks() {
+                GameState.placedBlocks = [];
+                GameState.challengeCompleted = false;
+                this.updateStats();
+            },
+
+            reset() {
+                this.clearBlocks();
+                if (!GameState.isChallengeMode) {
+                    HintSystem.setState('welcome');
+                }
+            },
+
+            showHint() {
+                const hint = GameState.isChallengeMode && GameState.currentChallenge
+                    ? GameState.currentChallenge.hint
+                    : '💡 提示：\n\n面积：形状内部方块的个数\n周长：形状外边的总长度\n\n试试建造不同的形状，看看它们的面积和周长有什么关系！';
+                alert(hint);
+            },
+
+            showReward() {
+                AudioEngine.playComplete();
+
+                const overlay = document.getElementById('reward-overlay');
+                overlay.style.display = 'flex';
+                HintSystem.setState('complete');
+            },
+
+            restart() {
+                document.getElementById('reward-overlay').style.display = 'none';
+
+                if (GameState.isChallengeMode) {
+                    this.nextChallenge();
+                } else {
+                    this.clearBlocks();
+                    HintSystem.setState('welcome');
+                }
+            },
+
+            loadStars() {
+                const totalStars = localStorage.getItem('totalStars') || '0';
+                GameState.totalStars = parseInt(totalStars);
+                document.getElementById('totalStars').textContent = totalStars;
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                    container.appendChild(star);
+                }
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                this.drawBackground(ctx, width, height);
+                this.drawGrid(ctx);
+                this.drawBlocks(ctx);
+                this.drawHoverPreview(ctx);
+                this.drawPerimeterLines(ctx);
+                this.drawUI(ctx, width, height);
+            },
+
+            drawBackground(ctx, width, height) {
+                // 背景渐变
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#2c3e50');
+                gradient.addColorStop(1, '#1a252f');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                // 装饰性圆圈
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 2;
+
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.arc(width / 2, height / 2, 100 + i * 80, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            },
+
+            drawGrid(ctx) {
+                const gridSize = GameState.gridSize;
+                const gridX = GameState.gridX;
+                const gridY = GameState.gridY;
+                const cols = GameState.gridCols;
+                const rows = GameState.gridRows;
+
+                // 绘制网格背景
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+                ctx.fillRect(gridX - 10, gridY - 10, cols * gridSize + 20, rows * gridSize + 20);
+
+                // 绘制网格线
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1.5;
+
+                // 垂直线
+                for (let i = 0; i <= cols; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(gridX + i * gridSize, gridY);
+                    ctx.lineTo(gridX + i * gridSize, gridY + rows * gridSize);
+                    ctx.stroke();
+                }
+
+                // 水平线
+                for (let i = 0; i <= rows; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(gridX, gridY + i * gridSize);
+                    ctx.lineTo(gridX + cols * gridSize, gridY + i * gridSize);
+                    ctx.stroke();
+                }
+
+                // 网格边框
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(gridX, gridY, cols * gridSize, rows * gridSize);
+            },
+
+            drawBlocks(ctx) {
+                const gridSize = GameState.gridSize;
+                const gridX = GameState.gridX;
+                const gridY = GameState.gridY;
+
+                GameState.placedBlocks.forEach((block, index) => {
+                    const x = gridX + block.x * gridSize + 2;
+                    const y = gridY + block.y * gridSize + 2;
+                    const size = gridSize - 4;
+
+                    // 绘制阴影
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fillRect(x + 3, y + 3, size, size);
+
+                    // 绘制方块
+                    ctx.fillStyle = block.color;
+                    ctx.fillRect(x, y, size, size);
+
+                    // 绘制边框（更明显）
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x, y, size, size);
+
+                    // 高光效果
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                    ctx.fillRect(x, y, size, size / 3);
+                });
+            },
+
+            drawHoverPreview(ctx) {
+                // 绘制鼠标悬停预览
+                if (GameState.hoverGridX >= 0 && GameState.hoverGridY >= 0) {
+                    const gridSize = GameState.gridSize;
+                    const gridX = GameState.gridX;
+                    const gridY = GameState.gridY;
+                    const x = gridX + GameState.hoverGridX * gridSize;
+                    const y = gridY + GameState.hoverGridY * gridSize;
+
+                    // 检查是否已有方块
+                    const hasBlock = GameState.placedBlocks.some(
+                        b => b.x === GameState.hoverGridX && b.y === GameState.hoverGridY
+                    );
+
+                    if (!hasBlock) {
+                        // 半透明预览
+                        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                        ctx.fillRect(x + 2, y + 2, gridSize - 4, gridSize - 4);
+
+                        // 预览边框
+                        ctx.strokeStyle = '#ffd700';
+                        ctx.lineWidth = 3;
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeRect(x + 2, y + 2, gridSize - 4, gridSize - 4);
+                        ctx.setLineDash([]);
+                    }
+                }
+            },
+
+            drawPerimeterLines(ctx) {
+                if (GameState.placedBlocks.length === 0) return;
+
+                const gridSize = GameState.gridSize;
+                const gridX = GameState.gridX;
+                const gridY = GameState.gridY;
+
+                // 创建方块集合
+                const blockSet = new Set();
+                GameState.placedBlocks.forEach(block => {
+                    blockSet.add(`${block.x},${block.y}`);
+                });
+
+                // 绘制每条周长边
+                GameState.placedBlocks.forEach((block, index) => {
+                    const directions = [
+                        { dx: 1, dy: 0, color: '#ff6b6b' },   // 右 - 红色
+                        { dx: -1, dy: 0, color: '#4ecdc4' },  // 左 - 青色
+                        { dx: 0, dy: 1, color: '#45b7d1' },   // 下 - 蓝色
+                        { dx: 0, dy: -1, color: '#f9ca24' }   // 上 - 黄色
+                    ];
+
+                    directions.forEach(dir => {
+                        const neighborKey = `${block.x + dir.dx},${block.y + dir.dy}`;
+                        const hasNeighbor = blockSet.has(neighborKey);
+
+                        if (!hasNeighbor) {
+                            // 这个方向没有方块，是周长的一部分
+                            const centerX = gridX + (block.x + 0.5) * gridSize;
+                            const centerY = gridY + (block.y + 0.5) * gridSize;
+
+                            // 绘制边线
+                            ctx.beginPath();
+                            ctx.strokeStyle = dir.color;
+                            ctx.lineWidth = 4;
+                            ctx.lineCap = 'round';
+
+                            if (dir.dx === 1) {
+                                // 向右的边
+                                ctx.moveTo(centerX, centerY - gridSize / 2 + 2);
+                                ctx.lineTo(centerX, centerY + gridSize / 2 - 2);
+                            } else if (dir.dx === -1) {
+                                // 向左的边
+                                ctx.moveTo(centerX, centerY - gridSize / 2 + 2);
+                                ctx.lineTo(centerX, centerY + gridSize / 2 - 2);
+                            } else if (dir.dy === 1) {
+                                // 向下的边
+                                ctx.moveTo(centerX - gridSize / 2 + 2, centerY);
+                                ctx.lineTo(centerX + gridSize / 2 - 2, centerY);
+                            } else if (dir.dy === -1) {
+                                // 向上的边
+                                ctx.moveTo(centerX - gridSize / 2 + 2, centerY);
+                                ctx.lineTo(centerX + gridSize / 2 - 2, centerY);
+                            }
+
+                            ctx.stroke();
+                        }
+                    });
+                });
+            },
+
+            drawUI(ctx) {
+                const width = GameState.width;
+                const height = GameState.height;
+
+                // 绘制标题
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('📐', GameState.width / 2, height * 0.15);
+
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText('面积建造者', GameState.width / 2, height * 0.15 + 40);
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            try {
+                game.init();
+            } catch (error) {
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.innerHTML = `
+                        <div style="color: #e74c3c; font-size: 18px; text-align: center;">
+                            <h2>❌ 加载失败</h2>
+                            <p style="margin-top: 10px;">${error.message}</p>
+                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; background: white; color: #e74c3c;">刷新页面</button>
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

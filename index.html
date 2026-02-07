@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🧪 MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 50%, #2a2a6e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 56px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 22px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .progress-summary {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .progress-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .category-section {
+            margin-bottom: 50px;
+        }
+
+        .category-title {
+            font-size: 32px;
+            margin-bottom: 25px;
+            padding-left: 20px;
+            border-left: 5px solid #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .experiments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .experiment-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .experiment-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .experiment-card:hover::before {
+            left: 100%;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .experiment-card.completed {
+            border: 2px solid #27ae60;
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.2);
+        }
+
+        .experiment-card.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 28px;
+            color: #27ae60;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .card-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-description {
+            font-size: 15px;
+            line-height: 1.6;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            min-height: 48px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .difficulty {
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .difficulty.easy {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            border: 1px solid rgba(39, 174, 96, 0.4);
+        }
+
+        .difficulty.medium {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+            border: 1px solid rgba(243, 156, 18, 0.4);
+        }
+
+        .difficulty.hard {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.4);
+        }
+
+        .stars {
+            color: #f39c12;
+            font-size: 22px;
+            text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+        }
+
+        .footer {
+            text-align: center;
+            opacity: 0.6;
+            margin-top: 60px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 星星背景容器 -->
+    <div id="stars-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>🧪 MJ 科学实验室</h1>
+            <p class="subtitle">互动实验乐园 - 探索科学的奥秘！</p>
+            <div class="progress-summary">
+                <div class="progress-item">
+                    <div class="progress-value" id="totalExperiments">10</div>
+                    <div class="progress-label">总实验数</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-value" id="completedExperiments">1</div>
+                    <div class="progress-label">已完成</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-value">⭐ <span id="totalStars">0</span></div>
+                    <div class="progress-label">总星数</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 天文科学 -->
+        <section class="category-section">
+            <h2 class="category-title">🚀 天文科学</h2>
+            <div class="experiments-grid">
+                <a href="astronomy/solar-system-enhanced.html" class="experiment-card completed">
+                    <div class="card-icon">🌌</div>
+                    <h3 class="card-title">太阳系探险</h3>
+                    <p class="card-description">
+                        拖拽行星到正确的轨道，学习太阳系结构和开普勒定律！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty medium">中等</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 物理科学 -->
+        <section class="category-section">
+            <h2 class="category-title">⚡ 物理科学</h2>
+            <div class="experiments-grid">
+                <a href="physics/balancing-act.html" class="experiment-card">
+                    <div class="card-icon">⚖️</div>
+                    <h3 class="card-title">平衡跷跷板</h3>
+                    <p class="card-description">
+                        通过跷跷板游戏学习平衡、力矩和杠杆原理！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty easy">简单</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+
+                <a href="physics/forces-motion.html" class="experiment-card">
+                    <div class="card-icon">🏃</div>
+                    <h3 class="card-title">力与运动基础</h3>
+                    <p class="card-description">
+                        拔河和推箱子游戏，学习力和摩擦力的作用！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty medium">中等</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 数学科普 -->
+        <section class="category-section">
+            <h2 class="category-title">🔢 数学科普</h2>
+            <div class="experiments-grid">
+                <a href="mathematics/area-builder.html" class="experiment-card">
+                    <div class="card-icon">📐</div>
+                    <h3 class="card-title">面积建造者</h3>
+                    <p class="card-description">
+                        用彩色方块自由搭建形状，探索面积和周长的关系！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty easy">简单</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+
+                <a href="mathematics/fraction-matcher.html" class="experiment-card">
+                    <div class="card-icon">🔢</div>
+                    <h3 class="card-title">分数配对</h3>
+                    <p class="card-description">
+                        配对相同大小的分数图形或数字，学习等价分数！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty easy">简单</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+
+                <a href="mathematics/build-fraction.html" class="experiment-card">
+                    <div class="card-icon">🧱</div>
+                    <h3 class="card-title">建造分数</h3>
+                    <p class="card-description">
+                        根据给定的分数用图形块拼凑出来，逆向思维训练！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty medium">中等</span>
+                        <span class="stars">⭐⭐</span>
+                    </div>
+                </a>
+
+                <a href="mathematics/fractions-intro.html" class="experiment-card">
+                    <div class="card-icon">🍕</div>
+                    <h3 class="card-title">分数入门</h3>
+                    <p class="card-description">
+                        通过分披萨、分巧克力等生活场景理解分数！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty easy">简单</span>
+                        <span class="stars">⭐⭐</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 电学实验 -->
+        <section class="category-section">
+            <h2 class="category-title">⚡ 电学实验</h2>
+            <div class="experiments-grid">
+                <a href="electricity/balloons-static.html" class="experiment-card">
+                    <div class="card-icon">🎈</div>
+                    <h3 class="card-title">气球与静电</h3>
+                    <p class="card-description">
+                        观察气球如何产生静电，学习同种电荷相斥、异种电荷相吸！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty hard">困难</span>
+                        <span class="stars">⭐⭐</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 物质科学 -->
+        <section class="category-section">
+            <h2 class="category-title">🧊 物质科学</h2>
+            <div class="experiments-grid">
+                <a href="matter/states-of-matter.html" class="experiment-card">
+                    <div class="card-icon">🌊</div>
+                    <h3 class="card-title">物质状态基础</h3>
+                    <p class="card-description">
+                        观察物质在固态、液态、气态下的行为变化！
+                    </p>
+                    <div class="card-meta">
+                        <span class="difficulty medium">中等</span>
+                        <span class="stars">⭐⭐⭐</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>© 2026 MJ 科学实验室 - 为一二年级孩子设计的互动科学教育平台</p>
+            <p style="margin-top: 10px; font-size: 14px; opacity: 0.7;">基于 PhET Interactive Simulations 设计理念</p>
+        </div>
+    </div>
+
+    <script>
+        // 创建星星背景
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = 80;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                star.style.animation = `twinkle ${star.style.animationDuration} infinite ${star.style.animationDelay}`;
+
+                container.appendChild(star);
+            }
+        }
+
+        // 加载进度数据
+        function loadProgress() {
+            const totalStars = localStorage.getItem('totalStars') || '0';
+            document.getElementById('totalStars').textContent = totalStars;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            createStars();
+            loadProgress();
+        });
+    </script>
+</body>
+</html>

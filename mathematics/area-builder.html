@@ -955,7 +955,6 @@
                 this.drawGrid(ctx);
                 this.drawBlocks(ctx);
                 this.drawHoverPreview(ctx);
-                this.drawPerimeterLines(ctx);
                 this.drawUI(ctx, width, height);
             },
 
@@ -1071,67 +1070,6 @@
                         ctx.setLineDash([]);
                     }
                 }
-            },
-
-            drawPerimeterLines(ctx) {
-                if (GameState.placedBlocks.length === 0) return;
-
-                const gridSize = GameState.gridSize;
-                const gridX = GameState.gridX;
-                const gridY = GameState.gridY;
-
-                // 创建方块集合
-                const blockSet = new Set();
-                GameState.placedBlocks.forEach(block => {
-                    blockSet.add(`${block.x},${block.y}`);
-                });
-
-                // 绘制每条周长边
-                GameState.placedBlocks.forEach((block, index) => {
-                    const directions = [
-                        { dx: 1, dy: 0, color: '#ff6b6b' },   // 右 - 红色
-                        { dx: -1, dy: 0, color: '#4ecdc4' },  // 左 - 青色
-                        { dx: 0, dy: 1, color: '#45b7d1' },   // 下 - 蓝色
-                        { dx: 0, dy: -1, color: '#f9ca24' }   // 上 - 黄色
-                    ];
-
-                    directions.forEach(dir => {
-                        const neighborKey = `${block.x + dir.dx},${block.y + dir.dy}`;
-                        const hasNeighbor = blockSet.has(neighborKey);
-
-                        if (!hasNeighbor) {
-                            // 这个方向没有方块，是周长的一部分
-                            const centerX = gridX + (block.x + 0.5) * gridSize;
-                            const centerY = gridY + (block.y + 0.5) * gridSize;
-
-                            // 绘制边线
-                            ctx.beginPath();
-                            ctx.strokeStyle = dir.color;
-                            ctx.lineWidth = 4;
-                            ctx.lineCap = 'round';
-
-                            if (dir.dx === 1) {
-                                // 向右的边
-                                ctx.moveTo(centerX, centerY - gridSize / 2 + 2);
-                                ctx.lineTo(centerX, centerY + gridSize / 2 - 2);
-                            } else if (dir.dx === -1) {
-                                // 向左的边
-                                ctx.moveTo(centerX, centerY - gridSize / 2 + 2);
-                                ctx.lineTo(centerX, centerY + gridSize / 2 - 2);
-                            } else if (dir.dy === 1) {
-                                // 向下的边
-                                ctx.moveTo(centerX - gridSize / 2 + 2, centerY);
-                                ctx.lineTo(centerX + gridSize / 2 - 2, centerY);
-                            } else if (dir.dy === -1) {
-                                // 向上的边
-                                ctx.moveTo(centerX - gridSize / 2 + 2, centerY);
-                                ctx.lineTo(centerX + gridSize / 2 - 2, centerY);
-                            }
-
-                            ctx.stroke();
-                        }
-                    });
-                });
             },
 
             drawUI(ctx) {

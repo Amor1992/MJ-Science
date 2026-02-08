@@ -373,15 +373,15 @@
         <section class="category-section">
             <h2 class="category-title">⚡ 电学实验</h2>
             <div class="experiments-grid">
-                <a href="electricity/balloons-static.html" class="experiment-card">
+                <a href="electricity/balloons-static.html" class="experiment-card completed">
                     <div class="card-icon">🎈</div>
                     <h3 class="card-title">气球与静电</h3>
                     <p class="card-description">
                         观察气球如何产生静电，学习同种电荷相斥、异种电荷相吸！
                     </p>
                     <div class="card-meta">
-                        <span class="difficulty hard">困难</span>
-                        <span class="stars">⭐⭐</span>
+                        <span class="difficulty medium">中等</span>
+                        <span class="stars">⭐⭐⭐</span>
                     </div>
                 </a>
             </div>
@@ -440,6 +440,10 @@
         function loadProgress() {
             const totalStars = localStorage.getItem('totalStars') || '0';
             document.getElementById('totalStars').textContent = totalStars;
+
+            // 计算已完成的实验数量
+            const completedCards = document.querySelectorAll('.experiment-card.completed').length;
+            document.getElementById('completedExperiments').textContent = completedCards;
         }
 
         // 初始化

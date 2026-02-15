@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎈 气球与静电 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        /* 信息面板 */
+        #info-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        #info-panel h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .info-row {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-label {
+            color: #aaa;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: #4caf50;
+        }
+
+        /* 星星收集 */
+        #stars-display {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 返回按钮 */
+        #back-btn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 152, 0, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        #back-btn:hover {
+            background: rgba(255, 152, 0, 1);
+            transform: scale(1.05);
+        }
+
+        /* 帮助按钮 */
+        #help-btn {
+            position: fixed;
+            top: 10px;
+            left: 140px;
+            width: 40px;
+            height: 40px;
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        #help-btn:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.1);
+        }
+
+        /* 帮助模态框 */
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 60, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #667eea;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 200;
+            backdrop-filter: blur(10px);
+        }
+
+        #help-modal.show {
+            display: block;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #help-modal h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #help-modal ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        #help-modal li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        #close-help {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        #close-help:hover {
+            opacity: 1;
+        }
+
+        /* 微观视图按钮 */
+        #microscopic-view {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            padding: 8px 16px;
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        #microscopic-view:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.05);
+        }
+
+        #microscopic-view.active {
+            background: rgba(76, 175, 80, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- 动态提示框 -->
+    <div id="hint">拖拽气球在毛衣上摩擦产生静电！</div>
+
+    <!-- 星星收集 -->
+    <div id="stars-display">
+        <span>⭐</span>
+        <span id="star-count">0</span>
+        <span>/ 3</span>
+    </div>
+
+    <!-- 帮助按钮 -->
+    <button id="help-btn">?</button>
+
+    <!-- 控制按钮 -->
+    <div id="controls">
+        <button class="control-btn" id="reset-btn">重置</button>
+        <button class="control-btn" id="microscopic-view">微观视图</button>
+    </div>
+
+    <!-- 信息面板 -->
+    <div id="info-panel">
+        <h3>📊 静电状态</h3>
+        <div class="info-row">
+            <span class="info-label">🔋 气球1电量:</span>
+            <span class="info-value" id="charge1">无</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">🔋 气球2电量:</span>
+            <span class="info-value" id="charge2">无</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">🎯 挑战:</span>
+            <span class="info-value" id="challenge">摩擦毛衣</span>
+        </div>
+    </div>
+
+    <!-- 返回按钮 -->
+    <a href="../index.html" id="back-btn">🏠 返回首页</a>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal">
+        <button id="close-help">×</button>
+        <h2>🎈 静电实验指南</h2>
+        <ul>
+            <li>🔸 拖拽气球在毛衣上摩擦，产生静电</li>
+            <li>🔸 带电的气球会被墙壁吸引</li>
+            <li>🔸 两个带同种电荷的气球会互相排斥</li>
+            <li>🔸 点击"微观视图"观察电荷分布</li>
+            <li>🔸 完成所有挑战收集星星！</li>
+        </ul>
+        <h3>🎯 挑战任务</h3>
+        <ol>
+            <li>让气球带电</li>
+            <li>把气球贴在墙壁上</li>
+            <li>让两个气球互相排斥</li>
+        </ol>
+        <p style="margin-top: 15px; color: #ffd700;">
+            💡 小知识：摩擦时电子从毛衣转移到气球，气球带负电！
+        </p>
+    </div>
+
+    <script>
+        // 音效系统
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            switch(type) {
+                case 'rub':
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                case 'attract':
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'repel':
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                case 'star':
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1046.5, audioContext.currentTime + 0.1);
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+            }
+        }
+
+        // 创建星星背景
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                document.getElementById('game-container').appendChild(star);
+            }
+        }
+        createStars();
+
+        // 游戏状态
+        const gameState = {
+            stars: 0,
+            challenges: {
+                rubbed: false,
+                stuckToWall: false,
+                repelled: false
+            },
+            microscopicView: false
+        };
+
+        // 加载进度
+        function loadProgress() {
+            const saved = localStorage.getItem('balloons-static-progress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                gameState.stars = progress.stars || 0;
+                updateStarsDisplay();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('balloons-static-progress', JSON.stringify({
+                stars: gameState.stars
+            }));
+        }
+
+        function updateStarsDisplay() {
+            document.getElementById('star-count').textContent = gameState.stars;
+        }
+
+        loadProgress();
+
+        // Canvas 设置
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 场景对象
+        const scene = {
+            wallX: 0.85, // 墙壁位置（屏幕宽度的85%）
+            sweater: {
+                x: 0.3,
+                y: 0.6,
+                width: 200,
+                height: 180,
+                color: '#ff6b6b'
+            },
+            balloons: [
+                {
+                    id: 1,
+                    x: 0.2,
+                    y: 0.5,
+                    radius: 50,
+                    color: '#ff69b4',
+                    charge: 0, // -1 到 1，0表示不带电
+                    vx: 0,
+                    vy: 0,
+                    isDragging: false,
+                    isStuck: false
+                },
+                {
+                    id: 2,
+                    x: 0.15,
+                    y: 0.4,
+                    radius: 45,
+                    color: '#87ceeb',
+                    charge: 0,
+                    vx: 0,
+                    vy: 0,
+                    isDragging: false,
+                    isStuck: false
+                }
+            ],
+            particles: [] // 微观粒子
+        };
+
+        // 创建微观粒子
+        function createParticles() {
+            scene.particles = [];
+            scene.balloons.forEach(balloon => {
+                if (balloon.charge !== 0) {
+                    const count = Math.abs(balloon.charge) * 50;
+                    for (let i = 0; i < count; i++) {
+                        const angle = (Math.PI * 2 * i) / count;
+                        const distance = balloon.radius * 0.7 + Math.random() * 10;
+                        scene.particles.push({
+                            x: balloon.x + Math.cos(angle) * distance,
+                            y: balloon.y + Math.sin(angle) * distance,
+                            vx: (Math.random() - 0.5) * 2,
+                            vy: (Math.random() - 0.5) * 2,
+                            charge: balloon.charge > 0 ? 1 : -1,
+                            size: 3 + Math.random() * 2
+                        });
+                    }
+                }
+            });
+        }
+
+        // 拖拽状态
+        let dragState = {
+            isDragging: false,
+            targetBalloon: null,
+            offsetX: 0,
+            offsetY: 0
+        };
+
+        // 绘制墙壁
+        function drawWall() {
+            const x = canvas.width * scene.wallX;
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(x, 0, canvas.width - x, canvas.height);
+
+            // 墙壁纹理
+            ctx.strokeStyle = '#6b3510';
+            ctx.lineWidth = 2;
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(canvas.width, y + 25);
+                ctx.stroke();
+            }
+
+            // 墙壁标签
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('墙壁', x + (canvas.width - x) / 2, canvas.height / 2);
+        }
+
+        // 绘制毛衣
+        function drawSweater() {
+            const s = scene.sweater;
+            ctx.save();
+            ctx.translate(canvas.width * s.x - s.width / 2, canvas.height * s.y - s.height / 2);
+
+            // 毛衣主体
+            ctx.fillStyle = s.color;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, s.width, s.height, 10);
+            ctx.fill();
+
+            // 毛衣纹理
+            ctx.strokeStyle = '#e85a5a';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < s.height; i += 15) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(s.width, i);
+                ctx.stroke();
+            }
+
+            // 毛衣标签
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('毛衣', s.width / 2, s.height / 2);
+
+            // 摩擦提示
+            ctx.font = '12px Arial';
+            ctx.fillText('在这里摩擦！', s.width / 2, s.height - 20);
+
+            ctx.restore();
+        }
+
+        // 绘制气球
+        function drawBalloon(balloon) {
+            const x = canvas.width * balloon.x;
+            const y = canvas.height * balloon.y;
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 气球主体
+            ctx.beginPath();
+            ctx.ellipse(0, 0, balloon.radius, balloon.radius * 1.2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = balloon.color;
+            ctx.fill();
+
+            // 高光
+            ctx.beginPath();
+            ctx.ellipse(-balloon.radius * 0.3, -balloon.radius * 0.4, balloon.radius * 0.2, balloon.radius * 0.15, -0.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fill();
+
+            // 电荷指示器
+            if (balloon.charge !== 0) {
+                ctx.fillStyle = balloon.charge > 0 ? '#ff4444' : '#4444ff';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(balloon.charge > 0 ? '+' : '-', 0, 0);
+            }
+
+            // 气球绳子
+            ctx.beginPath();
+            ctx.moveTo(0, balloon.radius * 1.15);
+            ctx.quadraticCurveTo(10, balloon.radius * 1.5, 5, balloon.radius * 2);
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // 绘制微观粒子
+        function drawMicroscopicView() {
+            if (!gameState.microscopicView) return;
+
+            scene.particles.forEach(particle => {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fillStyle = particle.charge > 0 ? '#ff4444' : '#4444ff';
+                ctx.fill();
+
+                // 粒子标签
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(particle.charge > 0 ? '+' : '-', particle.x, particle.y);
+            });
+        }
+
+        // 主绘制函数
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制场景
+            drawWall();
+            drawSweater();
+            drawMicroscopicView();
+
+            // 绘制气球
+            scene.balloons.forEach(balloon => drawBalloon(balloon));
+
+            // 绘制拖拽线
+            if (dragState.isDragging && dragState.targetBalloon) {
+                const balloon = dragState.targetBalloon;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width * balloon.x, canvas.height * balloon.y);
+                ctx.lineTo(canvas.width * dragState.currentX, canvas.height * dragState.currentY);
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // 物理更新
+        function update() {
+            const wallX = canvas.width * scene.wallX;
+
+            scene.balloons.forEach((balloon, i) => {
+                if (balloon.isDragging || balloon.isStuck) return;
+
+                // 重力
+                balloon.vy += 0.5;
+
+                // 空气阻力
+                balloon.vx *= 0.99;
+                balloon.vy *= 0.99;
+
+                // 墙壁吸引力
+                if (balloon.charge !== 0) {
+                    const distToWall = wallX - (canvas.width * balloon.x + balloon.radius);
+                    if (distToWall > 0 && distToWall < 150) {
+                        const force = 150 / (distToWall + 50);
+                        balloon.vx += force * 0.3;
+                    }
+                }
+
+                // 气球间的排斥力
+                for (let j = 0; j < scene.balloons.length; j++) {
+                    if (i === j) continue;
+                    const other = scene.balloons[j];
+
+                    if (balloon.charge !== 0 && other.charge !== 0 &&
+                        Math.sign(balloon.charge) === Math.sign(other.charge)) {
+                        const dx = balloon.x - other.x;
+                        const dy = balloon.y - other.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = (balloon.radius + other.radius) / canvas.height;
+
+                        if (dist < minDist + 0.2) {
+                            const force = (minDist + 0.2 - dist) * 5;
+                            balloon.vx += (dx / dist) * force;
+                            balloon.vy += (dy / dist) * force;
+
+                            if (!gameState.challenges.repelled && dist < minDist) {
+                                gameState.challenges.repelled = true;
+                                playSound('repel');
+                                showHint('两个气球互相排斥了！');
+                                checkChallenges();
+                            }
+                        }
+                    }
+                }
+
+                // 更新位置
+                balloon.x += balloon.vx / canvas.width;
+                balloon.y += balloon.vy / canvas.height;
+
+                // 边界检测
+                if (balloon.x < balloon.radius / canvas.width) {
+                    balloon.x = balloon.radius / canvas.width;
+                    balloon.vx *= -0.5;
+                }
+                if (balloon.y > 1 - balloon.radius / canvas.height) {
+                    balloon.y = 1 - balloon.radius / canvas.height;
+                    balloon.vy *= -0.5;
+                }
+
+                // 墙壁检测
+                if (canvas.width * balloon.x + balloon.radius > wallX) {
+                    if (balloon.charge !== 0) {
+                        balloon.isStuck = true;
+                        balloon.x = (wallX - balloon.radius) / canvas.width;
+                        balloon.vx = 0;
+                        balloon.vy = 0;
+
+                        if (!gameState.challenges.stuckToWall) {
+                            gameState.challenges.stuckToWall = true;
+                            playSound('attract');
+                            showHint('气球被墙壁吸引了！');
+                            checkChallenges();
+                        }
+                    } else {
+                        balloon.x = (wallX - balloon.radius) / canvas.width;
+                        balloon.vx *= -0.5;
+                    }
+                }
+            });
+
+            // 更新微观粒子
+            if (gameState.microscopicView) {
+                scene.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    // 边界反弹
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                });
+            }
+
+            // 更新UI
+            updateInfoPanel();
+        }
+
+        // 更新信息面板
+        function updateInfoPanel() {
+            const charge1 = scene.balloons[0].charge;
+            const charge2 = scene.balloons[1].charge;
+
+            document.getElementById('charge1').textContent =
+                charge1 === 0 ? '无' : (charge1 > 0 ? '正电 (+)' : '负电 (-)');
+            document.getElementById('charge2').textContent =
+                charge2 === 0 ? '无' : (charge2 > 0 ? '正电 (+)' : '负电 (-)');
+
+            let challengeText = '摩擦毛衣';
+            if (gameState.challenges.rubbed) challengeText = '贴到墙壁';
+            if (gameState.challenges.stuckToWall) challengeText = '让气球互相排斥';
+            document.getElementById('challenge').textContent = challengeText;
+        }
+
+        // 检查挑战完成
+        function checkChallenges() {
+            if (gameState.challenges.rubbed && gameState.challenges.stuckToWall && gameState.challenges.repelled) {
+                if (gameState.stars < 3) {
+                    gameState.stars = 3;
+                    playSound('star');
+                    showHint('🎉 恭喜！你完成了所有挑战！');
+                    updateStarsDisplay();
+                    saveProgress();
+                }
+            }
+        }
+
+        // 显示提示
+        function showHint(text) {
+            const hint = document.getElementById('hint');
+            hint.textContent = text;
+            hint.style.animation = 'none';
+            hint.offsetHeight;
+            hint.style.animation = 'fadeIn 0.3s ease';
+        }
+
+        // 事件处理
+        function getEventPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) / canvas.width,
+                y: (clientY - rect.top) / canvas.height
+            };
+        }
+
+        function handleStart(e) {
+            e.preventDefault();
+            const pos = getEventPos(e);
+
+            // 检查是否点击了气球
+            for (const balloon of scene.balloons) {
+                const dx = pos.x - balloon.x;
+                const dy = pos.y - balloon.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < balloon.radius / Math.min(canvas.width, canvas.height) * 1.5) {
+                    dragState.isDragging = true;
+                    dragState.targetBalloon = balloon;
+                    dragState.offsetX = dx;
+                    dragState.offsetY = dy;
+                    balloon.isDragging = true;
+                    balloon.isStuck = false;
+                    return;
+                }
+            }
+        }
+
+        function handleMove(e) {
+            e.preventDefault();
+            if (!dragState.isDragging) return;
+
+            const pos = getEventPos(e);
+            const balloon = dragState.targetBalloon;
+
+            dragState.currentX = pos.x;
+            dragState.currentY = pos.y;
+
+            balloon.x = pos.x - dragState.offsetX;
+            balloon.y = pos.y - dragState.offsetY;
+
+            // 检查是否在毛衣上摩擦
+            const s = scene.sweater;
+            const sweaterCenterX = canvas.width * s.x;
+            const sweaterCenterY = canvas.height * s.y;
+
+            if (Math.abs(canvas.width * balloon.x - sweaterCenterX) < s.width / 2 &&
+                Math.abs(canvas.height * balloon.y - sweaterCenterY) < s.height / 2) {
+                // 摩擦产生静电
+                if (Math.abs(balloon.charge) < 1) {
+                    balloon.charge -= 0.01;
+                    if (!gameState.challenges.rubbed && Math.abs(balloon.charge) >= 0.5) {
+                        gameState.challenges.rubbed = true;
+                        playSound('rub');
+                        showHint('气球带电了！现在可以把它贴到墙上！');
+                        checkChallenges();
+                    }
+                }
+            }
+        }
+
+        function handleEnd(e) {
+            e.preventDefault();
+            if (dragState.isDragging && dragState.targetBalloon) {
+                dragState.targetBalloon.isDragging = false;
+                dragState.targetBalloon.vx = 0;
+                dragState.targetBalloon.vy = 0;
+            }
+            dragState.isDragging = false;
+            dragState.targetBalloon = null;
+
+            // 更新微观粒子
+            createParticles();
+        }
+
+        // 绑定事件
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('mouseleave', handleEnd);
+
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        canvas.addEventListener('touchend', handleEnd);
+
+        // 控制按钮
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            scene.balloons.forEach(balloon => {
+                balloon.charge = 0;
+                balloon.vx = 0;
+                balloon.vy = 0;
+                balloon.isStuck = false;
+            });
+            scene.particles = [];
+            gameState.challenges = {
+                rubbed: false,
+                stuckToWall: false,
+                repelled: false
+            };
+            showHint('重置完成，重新开始！');
+            createParticles();
+        });
+
+        document.getElementById('microscopic-view').addEventListener('click', (e) => {
+            gameState.microscopicView = !gameState.microscopicView;
+            e.target.classList.toggle('active');
+            if (gameState.microscopicView) {
+                createParticles();
+            }
+            showHint(gameState.microscopicView ? '微观视图已开启' : '微观视图已关闭');
+        });
+
+        // 帮助模态框
+        document.getElementById('help-btn').addEventListener('click', () => {
+            document.getElementById('help-modal').classList.add('show');
+        });
+
+        document.getElementById('close-help').addEventListener('click', () => {
+            document.getElementById('help-modal').classList.remove('show');
+        });
+
+        // 游戏循环
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

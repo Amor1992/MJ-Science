@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌊 物质状态基础 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        /* 物质选择器 */
+        #substance-selector {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .substance-btn {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .substance-btn:hover {
+            background: rgba(26, 84, 144, 0.8);
+            transform: scale(1.05);
+        }
+
+        .substance-btn.active {
+            background: rgba(155, 89, 182, 0.9);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        /* 视角切换 */
+        #view-switch {
+            position: fixed;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .view-btn:hover {
+            background: rgba(26, 84, 144, 0.8);
+            transform: scale(1.05);
+        }
+
+        .view-btn.active {
+            background: rgba(155, 89, 182, 0.9);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 温度控制面板 */
+        #temperature-control {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        #temperature-control h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .temp-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .temp-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e74c3c;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .temp-slider-container {
+            width: 100%;
+        }
+
+        #temp-slider {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #3498db 0%, #3498db 33%, #27ae60 33%, #27ae60 66%, #e74c3c 66%, #e74c3c 100%);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #temp-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #ffd700;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        #temp-slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: #ffd700;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .temp-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 状态指示器 */
+        #state-indicator {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+            text-align: center;
+        }
+
+        /* 信息面板 */
+        #info-panel {
+            position: fixed;
+            top: 160px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            max-width: 280px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        #info-panel h3 {
+            color: #ffd700;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        #info-panel p {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        #info-panel .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+
+        #info-panel .info-label {
+            opacity: 0.7;
+        }
+
+        #info-panel .info-value {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* 完成奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: text-fade 1s ease-out 0.3s both;
+        }
+
+        @keyframes text-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+            animation: text-fade 1s ease-out 0.6s both;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+            animation: text-fade 1s ease-out 0.9s both;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        #loading .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>🌊 正在准备物质状态实验...</p>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 动态提示 -->
+        <div id="hint">🌟 选择一种物质，然后调节温度观察状态变化！</div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.reset()">🔄 重新开始</button>
+            <button class="control-btn" onclick="game.showHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 物质选择器 -->
+        <div id="substance-selector">
+            <button class="substance-btn active" id="btn-water" onclick="game.selectSubstance('water')">💧 水</button>
+            <button class="substance-btn" id="btn-neon" onclick="game.selectSubstance('neon')">🌈 氖</button>
+            <button class="substance-btn" id="btn-oxygen" onclick="game.selectSubstance('oxygen')">💨 氧</button>
+        </div>
+
+        <!-- 视角切换 -->
+        <div id="view-switch">
+            <button class="view-btn active" id="btn-macro" onclick="game.switchView('macro')">🔍 宏观</button>
+            <button class="view-btn" id="btn-micro" onclick="game.switchView('micro')">🔬 微观</button>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- 状态指示器 -->
+        <div id="state-indicator">❄️ 固态</div>
+
+        <!-- 温度控制 -->
+        <div id="temperature-control">
+            <h3>🌡️ 温度控制</h3>
+            <div class="temp-display">
+                <span class="temp-value" id="temp-value">0°C</span>
+            </div>
+            <div class="temp-slider-container">
+                <input type="range" id="temp-slider" min="-200" max="200" value="0" oninput="game.updateTemperature()">
+            </div>
+            <div class="temp-labels">
+                <span>-200°C</span>
+                <span>0°C</span>
+                <span>100°C</span>
+                <span>200°C</span>
+            </div>
+        </div>
+
+        <!-- 信息面板 -->
+        <div id="info-panel">
+            <h3 id="info-title">💧 水</h3>
+            <p id="info-description">最常见的物质，存在于我们生活中的每一天。</p>
+            <div class="info-row">
+                <span class="info-label">熔点:</span>
+                <span class="info-value" id="info-melting">0°C</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">沸点:</span>
+                <span class="info-value" id="info-boiling">100°C</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">当前状态:</span>
+                <span class="info-value" id="info-state">液态</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">分子速度:</span>
+                <span class="info-value" id="info-speed">中等</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成奖励层 -->
+    <div id="reward-overlay">
+        <div id="medal">🏅</div>
+        <div id="reward-text">物质状态大师</div>
+        <div id="reward-stats">
+            探索次数: <span id="exploreCount">0</span><br>
+            总星星: <span id="totalStars">0</span>
+        </div>
+        <button id="restart-btn" onclick="game.restart()">继续探索</button>
+    </div>
+
+    <!-- 加载失败提示 -->
+    <div id="loading-error" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231, 76, 60, 0.9); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 1000;">
+        <h2>❌ 加载失败</h2>
+        <p>请刷新页面重试</p>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; background: white; color: #e74c3c;">刷新页面</button>
+    </div>
+
+    <script>
+        // 超时检测
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                loadingEl.style.display = 'none';
+                document.getElementById('loading-error').style.display = 'block';
+                console.error('加载超时');
+            }
+        }, 10000);
+    </script>
+
+    <script>
+        // ==================== 物质数据 ====================
+
+        const SUBSTANCE_DATA = {
+            water: {
+                name: '💧 水',
+                description: '最常见的物质，存在于我们生活中的每一天。',
+                meltingPoint: 0,
+                boilingPoint: 100,
+                color: '#3498db',
+                particles: [
+                    { color: '#3498db', size: 8 }
+                ]
+            },
+            neon: {
+                name: '🌈 氖',
+                description: '一种稀有气体，通电后会发出橘红色的光。',
+                meltingPoint: -249,
+                boilingPoint: -246,
+                color: '#e74c3c',
+                particles: [
+                    { color: '#e74c3c', size: 10 }
+                ]
+            },
+            oxygen: {
+                name: '💨 氧',
+                description: '我们呼吸的气体，支持燃烧和生命活动。',
+                meltingPoint: -219,
+                boilingPoint: -183,
+                color: '#27ae60',
+                particles: [
+                    { color: '#27ae60', size: 9 }
+                ]
+            }
+        };
+
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            currentSubstance: 'water',
+            currentView: 'macro', // 'macro' 或 'micro'
+            temperature: 0,
+            state: 'liquid', // 'solid', 'liquid', 'gas'
+            exploreCount: 0,
+            currentStars: 0,
+            totalStars: 0,
+
+            // 微观粒子
+            particles: [],
+
+            // 画布
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+
+            // 容器
+            container: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+            },
+
+            // 宏观对象
+            macroObject: {
+                x: 0,
+                y: 0,
+                size: 0,
+                phase: 0
+            }
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playChange() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.3);
+            },
+
+            playPhaseChange() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [392, 523, 659].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 150);
+                });
+            },
+
+            playComplete() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 初始化粒子
+                this.initParticles();
+
+                // 创建星星
+                this.createStars();
+
+                // 加载总星数
+                this.loadStars();
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
+                }, 800);
+
+                // 开始渲染
+                this.startRenderLoop();
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+
+                // 容器位置
+                GameState.container.x = GameState.width * 0.5;
+                GameState.container.y = GameState.height * 0.45;
+                GameState.container.width = GameState.width * 0.4;
+                GameState.container.height = GameState.height * 0.25;
+
+                // 宏观对象
+                GameState.macroObject.x = GameState.width * 0.5;
+                GameState.macroObject.y = GameState.height * 0.45;
+                GameState.macroObject.size = GameState.width * 0.15;
+
+                this.initParticles();
+            },
+
+            initParticles() {
+                const particleCount = 50;
+                const substance = SUBSTANCE_DATA[GameState.currentSubstance];
+                const container = GameState.container;
+
+                GameState.particles = [];
+
+                for (let i = 0; i < particleCount; i++) {
+                    GameState.particles.push({
+                        x: container.x + (Math.random() - 0.5) * container.width * 0.8,
+                        y: container.y + (Math.random() - 0.5) * container.height * 0.8,
+                        vx: 0,
+                        vy: 0,
+                        size: substance.particles[0].size + Math.random() * 3,
+                        color: substance.particles[0].color,
+                        inContainer: true
+                    });
+                }
+            },
+
+            selectSubstance(substance) {
+                GameState.currentSubstance = substance;
+
+                // 更新按钮状态
+                document.getElementById('btn-water').classList.toggle('active', substance === 'water');
+                document.getElementById('btn-neon').classList.toggle('active', substance === 'neon');
+                document.getElementById('btn-oxygen').classList.toggle('active', substance === 'oxygen');
+
+                // 更新信息面板
+                const data = SUBSTANCE_DATA[substance];
+                document.getElementById('info-title').textContent = data.name;
+                document.getElementById('info-description').textContent = data.description;
+                document.getElementById('info-melting').textContent = data.meltingPoint + '°C';
+                document.getElementById('info-boiling').textContent = data.boilingPoint + '°C';
+
+                // 重置粒子
+                this.initParticles();
+                this.updateTemperature();
+
+                AudioEngine.playChange();
+            },
+
+            switchView(view) {
+                GameState.currentView = view;
+
+                // 更新按钮状态
+                document.getElementById('btn-macro').classList.toggle('active', view === 'macro');
+                document.getElementById('btn-micro').classList.toggle('active', view === 'micro');
+
+                // 更新提示
+                if (view === 'macro') {
+                    document.getElementById('hint').textContent = '🔍 宏观视角：观察物质的整体外观变化！';
+                } else {
+                    document.getElementById('hint').textContent = '🔬 微观视角：观察分子的运动和排列方式！';
+                }
+
+                AudioEngine.playChange();
+            },
+
+            updateTemperature() {
+                const temp = parseInt(document.getElementById('temp-slider').value);
+                GameState.temperature = temp;
+
+                document.getElementById('temp-value').textContent = temp + '°C';
+
+                const substance = SUBSTANCE_DATA[GameState.currentSubstance];
+                let newState, stateText, stateEmoji;
+
+                if (temp < substance.meltingPoint) {
+                    newState = 'solid';
+                    stateText = '固态';
+                    stateEmoji = '❄️';
+                } else if (temp < substance.boilingPoint) {
+                    newState = 'liquid';
+                    stateText = '液态';
+                    stateEmoji = '💧';
+                } else {
+                    newState = 'gas';
+                    stateText = '气态';
+                    stateEmoji = '💨';
+                }
+
+                // 检查状态变化
+                if (GameState.state !== newState) {
+                    GameState.state = newState;
+                    document.getElementById('state-indicator').textContent = stateEmoji + ' ' + stateText;
+                    document.getElementById('info-state').textContent = stateText;
+                    AudioEngine.playPhaseChange();
+
+                    // 奖励检查
+                    if (this.hasExploredAllStates()) {
+                        GameState.exploreCount++;
+                        GameState.currentStars++;
+                        GameState.totalStars++;
+                        document.getElementById('exploreCount').textContent = GameState.exploreCount;
+                        document.getElementById('starCount').textContent = GameState.currentStars;
+                        localStorage.setItem('totalStars', GameState.totalStars.toString());
+                        document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                        setTimeout(() => {
+                            AudioEngine.playComplete();
+                            this.showReward();
+                        }, 500);
+                    }
+                }
+
+                // 更新分子速度信息
+                const speed = this.getMoleculeSpeed();
+                document.getElementById('info-speed').textContent = speed;
+
+                AudioEngine.playChange();
+            },
+
+            getMoleculeSpeed() {
+                const temp = GameState.temperature;
+                if (temp < -100) return '极慢';
+                if (temp < 0) return '慢';
+                if (temp < 50) return '中等';
+                if (temp < 100) return '快';
+                return '极快';
+            },
+
+            hasExploredAllStates() {
+                const substance = SUBSTANCE_DATA[GameState.currentSubstance];
+                const temp = GameState.temperature;
+
+                const hasSolid = temp < substance.meltingPoint;
+                const hasLiquid = temp >= substance.meltingPoint && temp < substance.boilingPoint;
+                const hasGas = temp >= substance.boilingPoint;
+
+                return hasSolid || hasLiquid || hasGas;
+            },
+
+            reset() {
+                document.getElementById('temp-slider').value = 0;
+                this.updateTemperature();
+                this.initParticles();
+            },
+
+            showHint() {
+                alert('💡 物质状态提示：\n\n**固态**：分子排列紧密，只能在固定位置振动\n**液态**：分子可以自由流动，但彼此靠得很近\n**气态**：分子运动快速，彼此分离很远\n\n**温度与状态的关系**：\n- 温度低于熔点：固态\n- 温度在熔点和沸点之间：液态\n- 温度高于沸点：气态\n\n不同的物质有不同的熔点和沸点！');
+            },
+
+            restart() {
+                document.getElementById('reward-overlay').style.display = 'none';
+                this.reset();
+            },
+
+            loadStars() {
+                const totalStars = localStorage.getItem('totalStars') || '0';
+                GameState.totalStars = parseInt(totalStars);
+                document.getElementById('totalStars').textContent = totalStars;
+            },
+
+            showReward() {
+                const overlay = document.getElementById('reward-overlay');
+                overlay.style.display = 'flex';
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                    container.appendChild(star);
+                }
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.update();
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            update() {
+                // 更新粒子
+                GameState.particles.forEach(particle => {
+                    const substance = SUBSTANCE_DATA[GameState.currentSubstance];
+                    const state = GameState.state;
+                    const container = GameState.container;
+
+                    // 根据状态更新速度
+                    if (state === 'solid') {
+                        // 固态：原地振动
+                        const vibrationSpeed = 0.5 + (GameState.temperature - substance.meltingPoint) / 100;
+                        particle.vx = (Math.random() - 0.5) * vibrationSpeed;
+                        particle.vy = (Math.random() - 0.5) * vibrationSpeed;
+                    } else if (state === 'liquid') {
+                        // 液态：缓慢流动
+                        const flowSpeed = 0.8 + (GameState.temperature - substance.meltingPoint) / 80;
+                        particle.vx = (Math.random() - 0.5) * flowSpeed;
+                        particle.vy = (Math.random() - 0.5) * flowSpeed;
+                    } else {
+                        // 气态：快速运动
+                        const gasSpeed = 3 + (GameState.temperature - substance.boilingPoint) / 30;
+                        const angle = Math.random() * Math.PI * 2;
+                        particle.vx = Math.cos(angle) * gasSpeed;
+                        particle.vy = Math.sin(angle) * gasSpeed;
+                    }
+
+                    // 更新位置
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    // 边界检查
+                    if (state === 'gas') {
+                        // 气态：可以逃逸容器
+                        particle.inContainer = false;
+                    } else {
+                        // 固态和液态：限制在容器内
+                        if (particle.inContainer) {
+                            if (particle.x < container.x - container.width / 2 + particle.size) {
+                                particle.x = container.x - container.width / 2 + particle.size;
+                                particle.vx *= -0.5;
+                            }
+                            if (particle.x > container.x + container.width / 2 - particle.size) {
+                                particle.x = container.x + container.width / 2 - particle.size;
+                                particle.vx *= -0.5;
+                            }
+                            if (particle.y < container.y - container.height / 2 + particle.size) {
+                                particle.y = container.y - container.height / 2 + particle.size;
+                                particle.vy *= -0.5;
+                            }
+                            if (particle.y > container.y + container.height / 2 - particle.size) {
+                                particle.y = container.y + container.height / 2 - particle.size;
+                                particle.vy *= -0.5;
+                            }
+                        }
+                    }
+
+                    // 屏幕边界（防止粒子跑太远）
+                    if (particle.x < -200 || particle.x > GameState.width + 200 ||
+                        particle.y < -200 || particle.y > GameState.height + 200) {
+                        particle.x = container.x;
+                        particle.y = container.y;
+                    }
+                });
+
+                // 更新宏观对象相位
+                GameState.macroObject.phase += 0.02;
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                this.drawBackground(ctx, width, height);
+
+                if (GameState.currentView === 'macro') {
+                    this.renderMacro(ctx, width, height);
+                } else {
+                    this.renderMicro(ctx, width, height);
+                }
+            },
+
+            drawBackground(ctx, width, height) {
+                // 草地
+                ctx.fillStyle = '#90EE90';
+                ctx.fillRect(0, height * 0.85, width, height * 0.15);
+
+                // 天空
+                const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.85);
+                skyGradient.addColorStop(0, '#87CEEB');
+                skyGradient.addColorStop(1, '#E0F7FA');
+                ctx.fillStyle = skyGradient;
+                ctx.fillRect(0, 0, width, height * 0.85);
+
+                // 太阳
+                ctx.beginPath();
+                ctx.arc(width * 0.85, 100, 50, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFD700';
+                ctx.fill();
+
+                // 太阳光芒
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i * 30) * Math.PI / 180;
+                    ctx.beginPath();
+                    ctx.moveTo(width * 0.85 + 60 * Math.cos(angle), 100 + 60 * Math.sin(angle));
+                    ctx.lineTo(width * 0.85 + 80 * Math.cos(angle), 100 + 80 * Math.sin(angle));
+                    ctx.stroke();
+                }
+            },
+
+            renderMacro(ctx, width, height) {
+                const substance = SUBSTANCE_DATA[GameState.currentSubstance];
+                const state = GameState.state;
+                const obj = GameState.macroObject;
+
+                // 绘制容器
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(obj.x - obj.size / 2 - 10, obj.y - obj.size / 2 - 10, obj.size + 20, obj.size + 20);
+
+                // 绘制物质
+                ctx.save();
+                ctx.translate(obj.x, obj.y);
+
+                if (state === 'solid') {
+                    // 固态：方形，固定形状
+                    ctx.fillStyle = substance.color;
+                    ctx.fillRect(-obj.size / 2, -obj.size / 2, obj.size, obj.size);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(-obj.size / 2, -obj.size / 2, obj.size, obj.size);
+
+                    // 冰裂纹
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-obj.size / 4, -obj.size / 2);
+                    ctx.lineTo(0, 0);
+                    ctx.lineTo(obj.size / 4, -obj.size / 2);
+                    ctx.stroke();
+                } else if (state === 'liquid') {
+                    // 液态：圆形，流动
+                    const radius = obj.size / 2 * (0.9 + 0.1 * Math.sin(obj.phase));
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = substance.color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // 水波纹
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, radius - 10 - i * 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else {
+                    // 气态：气泡，飘逸
+                    ctx.globalAlpha = 0.6;
+                    for (let i = 0; i < 5; i++) {
+                        const bubbleRadius = (obj.size / 6) * (0.8 + 0.4 * Math.sin(obj.phase + i * 0.5));
+                        const bubbleX = Math.sin(obj.phase * 0.7 + i) * (obj.size / 3);
+                        const bubbleY = Math.cos(obj.phase * 0.7 + i) * (obj.size / 3);
+
+                        ctx.beginPath();
+                        ctx.arc(bubbleX, bubbleY, bubbleRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = substance.color;
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                ctx.restore();
+
+                // 标签
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(substance.name, obj.x, obj.y + obj.size / 2 + 40);
+            },
+
+            renderMicro(ctx, width, height) {
+                const container = GameState.container;
+
+                // 绘制容器
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(container.x - container.width / 2, container.y - container.height / 2, container.width, container.height);
+
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(container.x - container.width / 2, container.y - container.height / 2, container.width, container.height);
+
+                // 绘制粒子
+                GameState.particles.forEach(particle => {
+                    ctx.save();
+                    ctx.globalAlpha = 0.8;
+
+                    // 粒子光晕
+                    const glow = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, particle.size * 2);
+                    glow.addColorStop(0, particle.color);
+                    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 粒子本体
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    ctx.restore();
+                });
+
+                // 状态说明
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                let stateDescription = '';
+                if (GameState.state === 'solid') {
+                    stateDescription = '分子紧密排列，只能在固定位置振动';
+                } else if (GameState.state === 'liquid') {
+                    stateDescription = '分子可以流动，但彼此靠近';
+                } else {
+                    stateDescription = '分子快速运动，彼此分离';
+                }
+                ctx.fillText(stateDescription, container.x, container.y + container.height / 2 + 50);
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，开始初始化游戏...');
+            try {
+                game.init();
+                console.log('游戏初始化成功！');
+            } catch (error) {
+                console.error('游戏初始化失败:', error);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                document.getElementById('loading-error').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

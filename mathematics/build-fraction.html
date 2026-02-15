@@ -92,6 +92,50 @@
             transform: scale(1.05);
         }
 
+        /* 关卡选择 */
+        #level-selector {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
+        }
+
+        .level-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .level-btn:hover {
+            background: rgba(26, 84, 144, 0.8);
+            transform: scale(1.1);
+        }
+
+        .level-btn.active {
+            background: rgba(155, 89, 182, 0.9);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        .level-btn.completed {
+            border-color: #27ae60;
+        }
+
         /* 星星计数器 */
         #star-counter {
             position: fixed;
@@ -110,41 +154,44 @@
             gap: 8px;
         }
 
-        /* 目标分数显示 */
-        #target-display {
+        /* 分数显示面板 */
+        #fraction-display {
             position: fixed;
-            bottom: 140px;
+            top: 120px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
             color: white;
-            padding: 20px 40px;
+            padding: 20px 30px;
             border-radius: 20px;
-            border: 2px solid rgba(255, 215, 0, 0.5);
-            backdrop-filter: blur(10px);
+            border: 3px solid #ffd700;
             text-align: center;
             z-index: 100;
+            backdrop-filter: blur(10px);
+            min-width: 300px;
         }
 
-        #target-display h3 {
+        #fraction-display h3 {
             color: #ffd700;
             font-size: 18px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         #target-fraction {
             font-size: 48px;
+            font-weight: bold;
             color: #e74c3c;
-            margin: 15px 0;
+            margin-bottom: 15px;
         }
 
-        #target-description {
+        #fraction-display .hint {
             font-size: 14px;
-            opacity: 0.8;
+            opacity: 0.9;
+            line-height: 1.6;
         }
 
-        /* 碎片选择器 */
-        #piece-selector {
+        /* 积木选择面板 */
+        #block-selector {
             position: fixed;
             bottom: 20px;
             left: 50%;
@@ -152,91 +199,46 @@
             display: flex;
             gap: 15px;
             z-index: 100;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
         }
 
-        .piece-btn {
+        .block-option {
             width: 80px;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.7);
+            height: 100px;
+            background: rgba(0, 0, 0, 0.85);
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 15px;
             cursor: pointer;
-            font-size: 36px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(10px);
             transition: all 0.3s;
-            position: relative;
-        }
-
-        .piece-btn:hover {
-            background: rgba(26, 84, 144, 0.8);
-            transform: scale(1.1);
-            border-color: rgba(255, 215, 0, 0.6);
-        }
-
-        .piece-btn .fraction {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .piece-btn .count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            border: 2px solid white;
-        }
-
-        /* 进度指示器 */
-        #progress-indicator {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 15px;
-            border: 2px solid rgba(255, 215, 0, 0.5);
             backdrop-filter: blur(10px);
-            z-index: 100;
         }
 
-        #progress-indicator h4 {
-            color: #ffd700;
-            font-size: 14px;
+        .block-option:hover {
+            background: rgba(155, 89, 182, 0.8);
+            transform: scale(1.05);
+        }
+
+        .block-option.selected {
+            border-color: #27ae60;
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
+        }
+
+        .block-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
             margin-bottom: 10px;
         }
 
-        #progress-bar {
-            width: 200px;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        #progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-            border-radius: 10px;
-            transition: width 0.3s;
-        }
-
-        #progress-text {
-            margin-top: 8px;
+        .block-label {
+            color: white;
             font-size: 14px;
-            color: #2ecc71;
             font-weight: bold;
         }
 
@@ -353,48 +355,30 @@
         <div id="star-counter">⭐ <span id="starCount">0</span></div>
 
         <!-- 动态提示 -->
-        <div id="hint">🌟 把下面的分数碎片拼起来，拼出目标分数！</div>
+        <div id="hint">🌟 用积木建造出目标分数！</div>
 
         <!-- 控制按钮 -->
         <div id="controls">
             <button class="control-btn" onclick="game.resetLevel()">🔄 重置</button>
-            <button class="control-btn" onclick="game.showHint()">💡 提示</button>
+            <button class="control-btn" onclick="game.checkAnswer()">✨ 检查</button>
+            <button class="control-btn" onclick="game.showHelp()">💡 帮助</button>
+        </div>
+
+        <!-- 关卡选择 -->
+        <div id="level-selector"></div>
+
+        <!-- 分数显示面板 -->
+        <div id="fraction-display">
+            <h3>🎯 目标分数</h3>
+            <div id="target-fraction">1/2</div>
+            <div class="hint" id="level-hint">💡 提示：把1个完整的形状平均分成2份，取其中1份</div>
         </div>
 
         <!-- 游戏画布 -->
         <canvas id="game-canvas"></canvas>
 
-        <!-- 目标分数显示 -->
-        <div id="target-display">
-            <h3>🎯 目标分数</h3>
-            <div id="target-fraction">1/2</div>
-            <div id="target-description">需要从下面的碎片中选出正确的部分！</div>
-        </div>
-
-        <!-- 碎片选择器 -->
-        <div id="piece-selector">
-            <div class="piece-btn" id="piece-1" onclick="game.selectPiece(1)">
-                <div class="fraction">1/4</div>
-                <div class="count" id="count-1">∞</div>
-            </div>
-            <div class="piece-btn" id="piece-2" onclick="game.selectPiece(2)">
-                <div class="fraction">1/4</div>
-                <div class="count" id="count-2">∞</div>
-            </div>
-            <div class="piece-btn" id="piece-3" onclick="game.selectPiece(3)">
-                <div class="fraction">1/2</div>
-                <div class="count" id="count-3">1</div>
-            </div>
-        </div>
-
-        <!-- 进度指示器 -->
-        <div id="progress-indicator">
-            <h4>📊 完成进度</h4>
-            <div id="progress-bar">
-                <div id="progress-fill" style="width: 0%"></div>
-            </div>
-            <div id="progress-text">0%</div>
-        </div>
+        <!-- 积木选择面板 -->
+        <div id="block-selector"></div>
     </div>
 
     <!-- 完成奖励层 -->
@@ -431,57 +415,99 @@
         // ==================== 关卡数据 ====================
 
         const LEVELS = [
-            // 关卡 1 - 简单（1/2 = 1/4 + 1/4）
+            // 关卡 1 - 1/2
             {
                 target: { num: 1, den: 2 },
-                pieces: [
-                    { num: 1, den: 4, count: 2 },
-                    { num: 1, den: 4, count: 2 },
-                    { num: 1, den: 2, count: 1 }
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/4圆', fraction: 0.25, color: '#3498db', shape: 'quarter-circle' },
+                    { name: '1/2圆', fraction: 0.5, color: '#27ae60', shape: 'half-circle' }
                 ],
-                hint: '💡 1/2 = 1/4 + 1/4，两个四分之一等于一个二分之一！'
+                hint: '💡 提示：把1个完整的圆平均分成2份，取其中1份',
+                difficulty: 1
             },
-            // 关卡 2（1/3 = 1/6 + 1/6 + 1/6）
+            // 关卡 2 - 1/4
             {
-                target: { num: 1, den: 3 },
-                pieces: [
-                    { num: 1, den: 6, count: 3 },
-                    { num: 1, den: 6, count: 3 },
-                    { num: 1, den: 3, count: 1 }
+                target: { num: 1, den: 4 },
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/2圆', fraction: 0.5, color: '#3498db', shape: 'half-circle' },
+                    { name: '1/4圆', fraction: 0.25, color: '#27ae60', shape: 'quarter-circle' },
+                    { name: '1/8圆', fraction: 0.125, color: '#f39c12', shape: 'eighth-circle' }
                 ],
-                hint: '💡 1/3 = 1/6 + 1/6 + 1/6，三个六分之一等于一个三分之一！'
+                hint: '💡 提示：把圆平均分成4份，取其中1份',
+                difficulty: 1
             },
-            // 关卡 3（3/4 = 1/2 + 1/4）
+            // 关卡 3 - 3/4
             {
                 target: { num: 3, den: 4 },
-                pieces: [
-                    { num: 1, den: 2, count: 1 },
-                    { num: 1, den: 4, count: 1 },
-                    { num: 1, den: 4, count: 1 },
-                    { num: 1, den: 8, count: 2 }
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/2圆', fraction: 0.5, color: '#3498db', shape: 'half-circle' },
+                    { name: '1/4圆', fraction: 0.25, color: '#27ae60', shape: 'quarter-circle' },
+                    { name: '1/4圆', fraction: 0.25, color: '#27ae60', shape: 'quarter-circle' },
+                    { name: '1/4圆', fraction: 0.25, color: '#27ae60', shape: 'quarter-circle' }
                 ],
-                hint: '💡 3/4 = 1/2 + 1/4，可以先用 1/2 + 1/4 试一试！'
+                hint: '💡 提示：需要3个1/4圆加起来等于3/4',
+                difficulty: 2
             },
-            // 关卡 4（2/3 = 1/3 + 1/3）
+            // 关卡 4 - 1/3
+            {
+                target: { num: 1, den: 3 },
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/3圆', fraction: 0.333, color: '#3498db', shape: 'third-circle' },
+                    { name: '1/6圆', fraction: 0.167, color: '#27ae60', shape: 'sixth-circle' }
+                ],
+                hint: '💡 提示：把圆平均分成3份，取其中1份',
+                difficulty: 1
+            },
+            // 关卡 5 - 2/3
             {
                 target: { num: 2, den: 3 },
-                pieces: [
-                    { num: 1, den: 3, count: 2 },
-                    { num: 1, den: 3, count: 2 },
-                    { num: 1, den: 6, count: 4 }
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/3圆', fraction: 0.333, color: '#3498db', shape: 'third-circle' },
+                    { name: '1/3圆', fraction: 0.333, color: '#27ae60', shape: 'third-circle' },
+                    { name: '1/6圆', fraction: 0.167, color: '#f39c12', shape: 'sixth-circle' }
                 ],
-                hint: '💡 2/3 = 1/3 + 1/3，两个三分之一等于三分之二！'
+                hint: '💡 提示：2个1/3圆加起来等于2/3',
+                difficulty: 2
             },
-            // 关卡 5（5/6 = 1/2 + 1/3）
+            // 关卡 6 - 2/5
             {
-                target: { num: 5, den: 6 },
-                pieces: [
-                    { num: 1, den: 2, count: 1 },
-                    { num: 1, den: 3, count: 1 },
-                    { num: 1, den: 6, count: 2 },
-                    { num: 1, den: 6, count: 2 }
+                target: { num: 2, den: 5 },
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#3498db', shape: 'fifth-circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#27ae60', shape: 'fifth-circle' }
                 ],
-                hint: '💡 5/6 = 1/2 + 1/3，先想想 1/2 = 3/6，1/3 = 2/6，加起来就是 5/6！'
+                hint: '💡 提示：需要2个1/5圆加起来等于2/5',
+                difficulty: 2
+            },
+            // 关卡 7 - 3/5
+            {
+                target: { num: 3, den: 5 },
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#3498db', shape: 'fifth-circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#27ae60', shape: 'fifth-circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#f39c12', shape: 'fifth-circle' }
+                ],
+                hint: '💡 提示：需要3个1/5圆加起来等于3/5',
+                difficulty: 2
+            },
+            // 关卡 8 - 1/10
+            {
+                target: { num: 1, den: 10 },
+                blocks: [
+                    { name: '整圆', fraction: 1, color: '#e74c3c', shape: 'circle' },
+                    { name: '1/2圆', fraction: 0.5, color: '#3498db', shape: 'half-circle' },
+                    { name: '1/5圆', fraction: 0.2, color: '#27ae60', shape: 'fifth-circle' },
+                    { name: '1/10圆', fraction: 0.1, color: '#f39c12', shape: 'tenth-circle' }
+                ],
+                hint: '💡 提示：把圆平均分成10份，取其中1份',
+                difficulty: 2
             }
         ];
 
@@ -489,29 +515,18 @@
 
         const GameState = {
             currentLevel: 0,
-            targetFraction: { num: 1, den: 2 },
-            currentSum: { num: 0, den: 1 },
-            selectedPieces: [],
+            selectedBlocks: [],
             completedLevels: [],
             currentStars: 0,
             totalStars: 0,
+            targetFraction: { num: 1, den: 2 },
+            availableBlocks: [],
 
             // 画布
             canvas: null,
             ctx: null,
             width: 0,
-            height: 0,
-
-            // 碎片
-            pieces: [],
-
-            // 放置区域
-            playArea: {
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0
-            }
+            height: 0
         };
 
         // ==================== 音效引擎 ====================
@@ -523,7 +538,7 @@
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             },
 
-            playSelect() {
+            playSnap() {
                 if (!this.audioContext) return;
 
                 const ctx = this.audioContext;
@@ -533,18 +548,18 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
 
-                oscillator.frequency.value = 400;
+                oscillator.frequency.value = 600;
                 oscillator.type = 'sine';
 
                 gainNode.gain.setValueAtTime(0, ctx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
                 oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.15);
+                oscillator.stop(ctx.currentTime + 0.3);
             },
 
-            playCorrect() {
+            playMatch() {
                 if (!this.audioContext) return;
 
                 const ctx = this.audioContext;
@@ -569,7 +584,7 @@
                 });
             },
 
-            playWrong() {
+            playError() {
                 if (!this.audioContext) return;
 
                 const ctx = this.audioContext;
@@ -579,11 +594,11 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
 
-                oscillator.frequency.value = 200;
-                oscillator.type = 'triangle';
+                oscillator.frequency.value = 150;
+                oscillator.type = 'sawtooth';
 
                 gainNode.gain.setValueAtTime(0, ctx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.08);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
                 oscillator.start(ctx.currentTime);
@@ -626,6 +641,9 @@
                 // 加载进度
                 this.loadProgress();
 
+                // 创建关卡按钮
+                this.createLevelButtons();
+
                 // 绑定音频初始化
                 document.addEventListener('click', () => {
                     if (!AudioEngine.audioContext) {
@@ -636,6 +654,9 @@
                 // 响应窗口
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 绑定事件
+                this.bindEvents();
 
                 // 创建星星
                 this.createStars();
@@ -665,164 +686,235 @@
 
                 canvas.width = GameState.width;
                 canvas.height = GameState.height;
+            },
 
-                // 放置区域
-                GameState.playArea = {
-                    x: GameState.width * 0.2,
-                    y: GameState.height * 0.35,
-                    width: GameState.width * 0.6,
-                    height: GameState.height * 0.25
-                };
+            createLevelButtons() {
+                const container = document.getElementById('level-selector');
+                container.innerHTML = '';
+
+                for (let i = 0; i < LEVELS.length; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'level-btn';
+                    btn.textContent = i + 1;
+                    btn.onclick = () => this.loadLevel(i);
+
+                    if (this.completedLevels.includes(i)) {
+                        btn.classList.add('completed');
+                    }
+
+                    container.appendChild(btn);
+                }
             },
 
             loadLevel(levelIndex) {
                 GameState.currentLevel = levelIndex;
-                GameState.selectedPieces = [];
-                GameState.currentSum = { num: 0, den: 1 };
+                GameState.selectedBlocks = [];
 
                 const levelData = LEVELS[levelIndex];
                 GameState.targetFraction = levelData.target;
+                GameState.availableBlocks = levelData.blocks;
 
-                // 创建碎片
-                GameState.pieces = levelData.pieces.map((piece, index) => ({
-                    ...piece,
-                    id: index + 1,
-                    used: 0,
-                    x: 0,
-                    y: 0,
-                    targetX: 0,
-                    targetY: 0
-                }));
+                // 更新UI
+                document.getElementById('target-fraction').textContent =
+                    `${GameState.targetFraction.num}/${GameState.targetFraction.den}`;
+                document.getElementById('level-hint').textContent = levelData.hint;
 
-                // 更新目标显示
-                this.updateTargetDisplay();
-                this.updatePieceButtons();
-                this.updateProgress();
+                // 创建积木选择器
+                this.createBlockSelector();
 
-                // 更新提示
-                document.getElementById('hint').textContent = levelData.hint || '🌟 把下面的分数碎片拼起来，拼出目标分数！';
+                // 更新按钮状态
+                document.querySelectorAll('.level-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', i === levelIndex);
+                });
             },
 
-            selectPiece(pieceId) {
-                const piece = GameState.pieces.find(p => p.id === pieceId);
+            createBlockSelector() {
+                const container = document.getElementById('block-selector');
+                container.innerHTML = '';
 
-                // 检查是否还有可用碎片
-                if (piece.used >= piece.count) {
-                    AudioEngine.playWrong();
+                GameState.availableBlocks.forEach((block, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'block-option';
+                    div.onclick = () => this.selectBlock(index);
+
+                    // 创建积木预览
+                    const preview = document.createElement('canvas');
+                    preview.className = 'block-preview';
+                    preview.width = 60;
+                    preview.height = 60;
+                    const ctx = preview.getContext('2d');
+
+                    // 绘制积木
+                    this.drawBlock(ctx, block, 30, 30, 30);
+
+                    // 添加到DOM
+                    div.appendChild(preview);
+
+                    const label = document.createElement('div');
+                    label.className = 'block-label';
+                    label.textContent = block.name;
+                    div.appendChild(label);
+
+                    container.appendChild(div);
+                });
+            },
+
+            drawBlock(ctx, block, x, y, size) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(size / 30, size / 30);
+
+                ctx.fillStyle = block.color;
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+
+                switch (block.shape) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 28, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'half-circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 28, 0, Math.PI);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'quarter-circle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, Math.PI / 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'third-circle':
+                        const thirdAngle = Math.PI / 3;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, thirdAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'fifth-circle':
+                        const fifthAngle = Math.PI / 5;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, fifthAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'sixth-circle':
+                        const sixthAngle = Math.PI / 6;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, sixthAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'eighth-circle':
+                        const eighthAngle = Math.PI / 8;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, eighthAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'tenth-circle':
+                        const tenthAngle = Math.PI / 10;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, 28, 0, tenthAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                }
+
+                ctx.restore();
+            },
+
+            selectBlock(blockIndex) {
+                const block = GameState.availableBlocks[blockIndex];
+
+                // 切换选中状态
+                const buttons = document.querySelectorAll('.block-option');
+                buttons.forEach((btn, i) => {
+                    btn.classList.toggle('selected', i === blockIndex);
+                });
+
+                // 添加到已选积木列表
+                GameState.selectedBlocks.push(block);
+
+                AudioEngine.playSnap();
+
+                document.getElementById('hint').textContent =
+                    `✨ 已添加：${block.name}（值：${block.fraction}）`;
+            },
+
+            checkAnswer() {
+                if (GameState.selectedBlocks.length === 0) {
+                    document.getElementById('hint').textContent =
+                        '⚠️ 请先选择积木！';
+                    AudioEngine.playError();
                     return;
                 }
 
-                // 添加到选中的碎片
-                GameState.selectedPieces.push(piece);
-                piece.used++;
+                // 计算所选积木的总和
+                const totalValue = GameState.selectedBlocks.reduce((sum, block) => sum + block.fraction, 0);
 
-                // 计算当前总和
-                this.calculateSum();
+                // 计算目标分数的值
+                const targetValue = GameState.targetFraction.num / GameState.targetFraction.den;
 
-                // 更新显示
-                this.updatePieceButtons();
-                this.updateProgress();
-
-                AudioEngine.playSelect();
-
-                // 检查是否完成
-                this.checkCompletion();
-            },
-
-            calculateSum() {
-                const sumNum = GameState.selectedPieces.reduce((total, piece) => {
-                    return total + piece.num * (GameState.currentSum.den / piece.den);
-                }, 0);
-
-                // 简化分数
-                const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-                const divisor = Math.abs(gcd(sumNum, GameState.currentSum.den));
-
-                GameState.currentSum = {
-                    num: sumNum / divisor,
-                    den: GameState.currentSum.den / divisor
-                };
-            },
-
-            checkCompletion() {
-                const target = GameState.targetFraction;
-                const current = GameState.currentSum;
-
-                // 检查是否相等
-                const targetValue = target.num / target.den;
-                const currentValue = current.num / current.den;
-
-                if (Math.abs(targetValue - currentValue) < 0.001) {
-                    // 成功！
-                    GameState.completedLevels.push(GameState.currentLevel);
-                    GameState.currentStars++;
-                    GameState.totalStars++;
-
-                    localStorage.setItem('build_fraction_completed', JSON.stringify(GameState.completedLevels));
-                    localStorage.setItem('totalStars', GameState.totalStars.toString());
-
-                    AudioEngine.playCorrect();
-
-                    setTimeout(() => {
-                        this.showReward();
-                    }, 500);
-                } else if (currentValue > targetValue) {
-                    // 超过了，重置
-                    AudioEngine.playWrong();
-                    this.resetPieces();
+                // 比较是否相等（允许小误差）
+                if (Math.abs(totalValue - targetValue) < 0.001) {
+                    // 正确！
+                    this.onLevelComplete();
+                } else {
+                    // 错误
+                    const diff = (totalValue - targetValue).toFixed(3);
+                    if (diff > 0) {
+                        document.getElementById('hint').textContent =
+                            `❌ 太大了！超出 ${diff}`;
+                    } else {
+                        document.getElementById('hint').textContent =
+                            `❌ 太小了！还差 ${Math.abs(diff)}`;
+                    }
+                    AudioEngine.playError();
                 }
             },
 
-            resetPieces() {
-                // 重置所有碎片的使用次数
-                GameState.pieces.forEach(piece => {
-                    piece.used = 0;
-                });
+            onLevelComplete() {
+                // 保存进度
+                if (!GameState.completedLevels.includes(GameState.currentLevel)) {
+                    GameState.completedLevels.push(GameState.currentLevel);
+                    localStorage.setItem('build_fraction_completed', JSON.stringify(GameState.completedLevels));
+                    this.createLevelButtons();
+                }
 
-                GameState.selectedPieces = [];
-                GameState.currentSum = { num: 0, den: 1 };
+                // 奖励
+                GameState.currentStars++;
+                GameState.totalStars++;
+                document.getElementById('starCount').textContent = GameState.currentStars;
+                localStorage.setItem('totalStars', GameState.totalStars.toString());
 
-                this.updatePieceButtons();
-                this.updateProgress();
-            },
-
-            resetLevel() {
-                this.resetPieces();
-                AudioEngine.playSelect();
-            },
-
-            updateTargetDisplay() {
-                const target = GameState.targetFraction;
-                document.getElementById('target-fraction').textContent = `${target.num}/${target.den}`;
-            },
-
-            updatePieceButtons() {
-                GameState.pieces.forEach(piece => {
-                    const btn = document.getElementById(`piece-${piece.id}`);
-                    const countEl = document.getElementById(`count-${piece.id}`);
-
-                    if (piece.used >= piece.count) {
-                        btn.style.opacity = '0.3';
-                        btn.style.pointerEvents = 'none';
-                        countEl.textContent = '✓';
-                    } else {
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'auto';
-                        countEl.textContent = piece.used > 0 ? `${piece.used}/${piece.count}` : '∞';
-                    }
-                });
-            },
-
-            updateProgress() {
-                const target = GameState.targetFraction;
-                const current = GameState.currentSum;
-
-                const targetValue = target.num / target.den;
-                const currentValue = current.num / current.den;
-
-                const progress = Math.min(100, (currentValue / targetValue) * 100);
-                document.getElementById('progress-fill').style.width = `${progress}%`;
-                document.getElementById('progress-text').textContent = `${Math.round(progress)}%`;
+                setTimeout(() => {
+                    AudioEngine.playComplete();
+                    this.showReward();
+                }, 500);
             },
 
             showReward() {
@@ -850,17 +942,39 @@
                 }
             },
 
-            showHint() {
+            resetLevel() {
+                GameState.selectedBlocks = [];
+                document.getElementById('hint').textContent = '🌟 用积木建造出目标分数！';
+
+                // 清除选中状态
+                document.querySelectorAll('.block-option').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+
+                AudioEngine.playSnap();
+            },
+
+            showHelp() {
                 const levelData = LEVELS[GameState.currentLevel];
-                alert('💡 建造分数提示：\n\n' + levelData.hint + '\n\n💡 小技巧：\n1. 分数加法：a/b + c/d = (a×d + c×b) / (b×d)\n2. 试试先用大的碎片，再用小的补充\n3. 如果加多了，可以重置再试一次！');
+                const target = levelData.target;
+                const targetValue = target.num / target.den;
+
+                alert('💡 分数建造帮助：\n\n' +
+                    `目标：建造出 ${target.num}/${target.den}\n` +
+                    `目标值：${targetValue.toFixed(3)}\n\n` +
+                    '💡 提示：\n' +
+                    '1. 从下方选择积木\n' +
+                    '2. 每个积木都有一个数值\n' +
+                    '3. 添加的积木数值加起来要等于目标值\n' +
+                    '4. 可以添加多个积木\n' +
+                    '5. 完成后点击"检查"按钮\n\n' +
+                      `当前提示：${levelData.hint}`);
             },
 
             loadProgress() {
                 const saved = localStorage.getItem('build_fraction_completed');
                 if (saved) {
                     GameState.completedLevels = JSON.parse(saved);
-                } else {
-                    GameState.completedLevels = [];
                 }
             },
 
@@ -886,6 +1000,10 @@
                 }
             },
 
+            bindEvents() {
+                // 可以在这里添加更多交互事件
+            },
+
             startRenderLoop() {
                 const render = () => {
                     this.render();
@@ -902,8 +1020,7 @@
                 ctx.clearRect(0, 0, width, height);
 
                 this.drawBackground(ctx, width, height);
-                this.drawPlayArea(ctx);
-                this.drawSelectedPieces(ctx);
+                this.drawSelectedBlocks(ctx, width, height);
             },
 
             drawBackground(ctx, width, height) {
@@ -936,92 +1053,48 @@
                 }
             },
 
-            drawPlayArea(ctx) {
-                const area = GameState.playArea;
+            drawSelectedBlocks(ctx, width, height) {
+                const centerX = width / 2;
+                const centerY = height * 0.5;
+                const blockSize = 80;
 
-                // 区域背景
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                ctx.beginPath();
-                ctx.roundRect(area.x, area.y, area.width, area.height, 20);
-                ctx.fill();
+                GameState.selectedBlocks.forEach((block, index) => {
+                    // 计算每个积木的位置（圆形排列）
+                    const total = GameState.selectedBlocks.length;
+                    const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+                    const radius = 100;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
 
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            },
+                    // 绘制积木
+                    this.drawBlock(ctx, block, x, y, blockSize);
 
-            drawSelectedPieces(ctx) {
-                const area = GameState.playArea;
-                const pieceCount = GameState.selectedPieces.length;
-
-                if (pieceCount === 0) {
-                    // 显示提示文字
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                    ctx.font = '24px Arial';
+                    // 绘制积木数值标签
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText('👇 点击下面的分数碎片', area.x + area.width / 2, area.y + area.height / 2);
-                    return;
-                }
-
-                // 计算碎片位置
-                const pieceWidth = area.width / Math.max(pieceCount, 3);
-                const gap = 10;
-                const totalWidth = pieceCount * pieceWidth + (pieceCount - 1) * gap;
-                const startX = area.x + (area.width - totalWidth) / 2;
-                const centerY = area.y + area.height / 2;
-
-                GameState.selectedPieces.forEach((piece, index) => {
-                    const x = startX + index * (pieceWidth + gap);
-                    const y = centerY;
-
-                    // 绘制碎片
-                    this.drawPiece(ctx, piece, x, y, pieceWidth);
+                    ctx.fillText(block.fraction, x, y);
                 });
 
-                // 显示当前总和
-                if (pieceCount > 0) {
-                    ctx.fillStyle = '#ffd700';
-                    ctx.font = 'bold 32px Arial';
+                // 如果有选中的积木，显示总和
+                if (GameState.selectedBlocks.length > 0) {
+                    const totalValue = GameState.selectedBlocks.reduce((sum, block) => sum + block.fraction, 0);
+                    const targetValue = GameState.targetFraction.num / GameState.targetFraction.den;
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 24px Arial';
                     ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(`= ${GameState.currentSum.num}/${GameState.currentSum.den}`, area.x + area.width / 2, area.y + area.height - 40);
+
+                    if (Math.abs(totalValue - targetValue) < 0.001) {
+                        ctx.fillStyle = '#27ae60';
+                        ctx.fillText('✓ 正确！', centerX, centerY + 150);
+                    } else {
+                        const diff = (totalValue - targetValue).toFixed(3);
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.fillText(`当前：${totalValue.toFixed(3)}`, centerX, centerY + 150);
+                    }
                 }
-            },
-
-            drawPiece(ctx, piece, x, y, width) {
-                const height = width;
-
-                // 背景卡片
-                const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-                gradient.addColorStop(0, '#3498db');
-                gradient.addColorStop(1, '#2980b9');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.roundRect(x - width/2, y - height/2, width, height, 15);
-                ctx.fill();
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // 分数线
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(x - width/3, y);
-                ctx.lineTo(x + width/3, y);
-                ctx.stroke();
-
-                // 分子
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(piece.num, x, y - height/4);
-
-                // 分母
-                ctx.fillText(piece.den, x, y + height/4);
             }
         };
 

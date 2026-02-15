@@ -802,6 +802,8 @@
                 const saved = localStorage.getItem('fraction_matcher_completed');
                 if (saved) {
                     GameState.completedLevels = JSON.parse(saved);
+                } else {
+                    GameState.completedLevels = [];
                 }
             },
 

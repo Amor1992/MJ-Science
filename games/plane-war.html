@@ -347,7 +347,8 @@
                 enemySpeed: 2,
                 bulletSpeed: 8,
                 playerSpeed: 6,
-                maxEnemies: 3
+                maxEnemies: 3,
+                winScore: 100 // 成功所需分数
             },
             medium: {
                 name: '中等',
@@ -355,7 +356,8 @@
                 enemySpeed: 3,
                 bulletSpeed: 7,
                 playerSpeed: 5,
-                maxEnemies: 5
+                maxEnemies: 5,
+                winScore: 200
             },
             hard: {
                 name: '困难',
@@ -363,7 +365,8 @@
                 enemySpeed: 4,
                 bulletSpeed: 6,
                 playerSpeed: 4,
-                maxEnemies: 8
+                maxEnemies: 8,
+                winScore: 300
             }
         };
 
@@ -595,7 +598,7 @@
                 this.config = DIFFICULTY_CONFIG[difficulty];
                 this.isRunning = true;
                 this.score = 0;
-                this.health = 3;
+                this.health = 5;
                 this.bullets = [];
                 this.enemies = [];
                 this.explosions = [];
@@ -704,7 +707,7 @@
                         this.updateHealthDisplay();
 
                         if (this.health <= 0) {
-                            this.gameOver();
+                            this.gameOver(false); // 失败
                         }
 
                         return false; // 移除敌机
@@ -712,6 +715,11 @@
 
                     return enemy.y < this.height;
                 });
+
+                // 检查是否成功
+                if (this.score >= this.config.winScore) {
+                    this.gameOver(true); // 成功
+                }
 
                 // 更新爆炸效果
                 this.explosions = this.explosions.filter(exp => {
@@ -750,9 +758,8 @@
                 document.getElementById('health-display').textContent = hearts;
             },
 
-            gameOver() {
+            gameOver(isSuccess = false) {
                 this.isRunning = false;
-                AudioEngine.playGameOver();
 
                 // 更新最高分
                 const highScoreKey = `plane_war_high_${this.difficulty}`;
@@ -765,8 +772,27 @@
                     this.highScore = currentHigh;
                 }
 
+                // 更新UI
                 document.getElementById('final-score').textContent = this.score;
                 document.getElementById('high-score').textContent = this.highScore;
+
+                const gameOverTitle = document.querySelector('#game-over h2');
+                const gameOverOverlay = document.getElementById('game-over');
+
+                if (isSuccess) {
+                    // 成功
+                    gameOverTitle.textContent = '🎉 恭喜成功！';
+                    gameOverTitle.style.color = '#27ae60';
+                    gameOverOverlay.style.borderColor = '#27ae60';
+                    AudioEngine.playMatch(); // 使用成功音效
+                } else {
+                    // 失败
+                    gameOverTitle.textContent = '💥 游戏结束';
+                    gameOverTitle.style.color = '#e74c3c';
+                    gameOverOverlay.style.borderColor = '#e74c3c';
+                    AudioEngine.playGameOver();
+                }
+
                 document.getElementById('game-over').style.display = 'block';
             },
 

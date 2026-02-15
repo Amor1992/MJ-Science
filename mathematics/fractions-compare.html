@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔢 分数比较学习 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 卡片样式 */
+        .card {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 150;
+        }
+
+        .card.left-panel {
+            left: 50%;
+            transform: translateX(calc(-100% - 15px));
+            top: 50%;
+            margin-top: -100px;
+        }
+
+        .card.right-panel {
+            right: 50%;
+            transform: translateX(calc(100% + 15px));
+            top: 50%;
+            margin-top: -100px;
+        }
+
+        .card .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .card .close-btn:hover {
+            color: #e74c3c;
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card .fraction {
+            font-size: 64px;
+            font-weight: bold;
+            color: #764ba2;
+            margin: 15px 0;
+        }
+
+        .card .fraction-text {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .card .bars {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card .bar {
+            height: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .card .bar:hover {
+            transform: scale(1.05);
+        }
+
+        .card .bar.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .card .bar-info {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card .bar:hover .bar-info {
+            opacity: 1;
+        }
+
+        .card .comparison-result {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            color: #764ba2;
+            display: none;
+        }
+
+        .card .comparison-result.visible {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 控制按钮 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.05);
+        }
+
+        .control-btn.active {
+            background: rgba(76, 175, 80, 0.8);
+            border-color: rgba(76, 175, 80, 1);
+        }
+
+        /* 难度选择器 */
+        .difficulty-selector {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            z-index: 100;
+        }
+
+        .difficulty-btn {
+            padding: 8px 16px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .difficulty-btn.easy {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+
+        .difficulty-btn.medium {
+            background: #f39c12;
+            border-color: #f39c12;
+        }
+
+        .difficulty-btn.hard {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .difficulty-btn.active {
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            transform: scale(1.1);
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 提示框 */
+        #hint {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #hint .hint-text {
+            flex: 1;
+        }
+
+        #hint .close-hint {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #hint .close-hint:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 模式切换 */
+        .mode-toggle {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(102, 126, 234, 0.8);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            z-index: 100;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 比较模式面板 */
+        #comparison-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            display: none;
+            min-width: 300px;
+        }
+
+        #comparison-panel.visible {
+            display: block;
+        }
+
+        #comparison-panel h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #comparison-panel .fraction-comparison {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+        }
+
+        #comparison-panel .fraction {
+            font-size: 48px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        #comparison-panel .comparison-operator {
+            font-size: 36px;
+            color: #ffd700;
+        }
+
+        #comparison-panel .result {
+            font-size: 24px;
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-top: 15px;
+        }
+
+        #comparison-panel .result.equal {
+            background: rgba(39, 174, 96, 0.2);
+            border: 2px solid #27ae60;
+        }
+
+        #comparison-panel .result.greater {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e67e22;
+        }
+
+        #comparison-panel .result.less {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e67e22;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* 奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 模式切换 -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="learn-mode-btn" onclick="game.setMode('learn')">📚 学习模式</button>
+            <button class="mode-btn" id="compare-mode-btn" onclick="game.setMode('compare')">⚖️ 比较模式</button>
+        </div>
+
+        <!-- 难度选择器 -->
+        <div class="difficulty-selector">
+            <button class="difficulty-btn easy" id="difficulty-easy" onclick="game.setDifficulty('easy')">简单</button>
+            <button class="difficulty-btn medium" id="difficulty-medium" onclick="game.setDifficulty('medium')">一般</button>
+            <button class="difficulty-btn hard" id="difficulty-hard" onclick="game.setDifficulty('hard')">困难</button>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.toggleHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 提示框 -->
+        <div id="hint">
+            <span class="hint-text" id="hint-text">🍕 选择一个分数开始学习！</span>
+            <button class="close-hint" onclick="game.closeHint()">✕</button>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- 比较模式面板 -->
+    <div id="comparison-panel">
+        <h3>⚖️ 分数比较</h3>
+        <div class="fraction-comparison">
+            <div class="fraction" id="compare-left">1/2</div>
+            <div class="comparison-operator" id="compare-operator">?</div>
+            <div class="fraction" id="compare-right">1/4</div>
+        </div>
+        <div class="result" id="comparison-result">
+            点击两个分数进行比较
+        </div>
+    </div>
+
+    <script>
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+
+            // 当前分数
+            leftNumerator: 1,
+            leftDenominator: 2,
+            rightNumerator: 1,
+            rightDenominator: 4,
+
+            // 拖拽
+            isDragging: false,
+            dragType: null, // 'left-numerator', 'left-denominator', 'right-numerator', 'right-denominator'
+            dragStartY: 0,
+            selectedSlot: null,
+
+            // 模式
+            mode: 'learn', // 'learn' or 'compare'
+            difficulty: 'easy', // 'easy', 'medium', 'hard'
+
+            // 星星
+            stars: 0,
+
+            // 难度配置
+            difficultyConfig: {
+                easy: { denominator: 4, maxNumerator: 4 },
+                medium: { denominator: 8, maxNumerator: 6 },
+                hard: { denominator: 12, maxNumerator: 10 }
+            }
+        };
+
+        const FRACTION_COLORS = {
+            pizza: {
+                base: '#f4a460',
+                secondary: '#e67e22',
+                slice1: '#f39c12',
+                slice2: '#f1c40f'
+            },
+            chocolate: {
+                base: '#8B4513',
+                secondary: '#D2691E',
+                slice1: '#A0522D',
+                slice2: '#7B3F00'
+            }
+        };
+
+        // ==================== 动态提示系统 ====================
+
+        const HintSystem = {
+            mode: {
+                learn: {
+                    pizza: '🍕 拖拽调整分子和分母来改变分数！',
+                    chocolate: '🍫 拖拽巧克力条来改变分数！'
+                },
+                compare: '⚖️ 分别拖拽左右两个分数进行比较！'
+            },
+            difficulty: {
+                easy: '💡 简单：分母不超过 4',
+                medium: '💡 一般：分母不超过 8',
+                hard: '💡 困难：分母不超过 12'
+            },
+            result: {
+                equal: '🎉 完全相等！',
+                greater: '👈 左边更大',
+                less: '👉 右边更大'
+            },
+            state: 'welcome',
+            showHint: true,
+
+            setState(state, showHintAlways = false) {
+                this.state = state;
+                if (showHintAlways) {
+                    this.showHint = true;
+                }
+                this.renderHint();
+            },
+
+            renderHint() {
+                const hintEl = document.getElementById('hint');
+                const textEl = document.getElementById('hint-text');
+                const closeBtn = document.getElementById('close-hint');
+
+                if (this.showHint) {
+                    let hintText = '';
+                    const mode = GameState.mode;
+                    const scene = GameState.difficulty === 'easy' ? 'pizza' : 'chocolate';
+
+                    if (this.state.startsWith('mode.')) {
+                        hintText = this.mode[this.state.split('.')[1]];
+                    } else if (this.state.startsWith('difficulty.')) {
+                        hintText = this.difficulty[this.state];
+                    } else if (this.state.startsWith('result.')) {
+                        hintText = this.result[this.state];
+                    } else {
+                        hintText = this.mode.learn[scene];
+                    }
+
+                    if (mode === 'compare') {
+                        hintText += ' 选择两个分数进行比较！';
+                    }
+
+                    textEl.textContent = hintText;
+                    closeBtn.style.display = 'none';
+                } else {
+                    closeBtn.style.display = 'block';
+                }
+
+                hintEl.style.animation = 'none';
+                hintEl.offsetHeight;
+                hintEl.style.animation = 'fadeIn 0.3s ease-in';
+            },
+
+            close() {
+                this.showHint = false;
+                this.renderHint();
+            }
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playSlide() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.2);
+            },
+
+            playSnap() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 600;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.3);
+            },
+
+            playComplete() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 绑定事件
+                this.bindEvents();
+
+                // 创建星星
+                this.createStars();
+
+                // 加载星数
+                this.loadStars();
+
+                // 初始化难度
+                this.setDifficulty('easy');
+                HintSystem.setState('mode.learn');
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+
+                // 切换场景
+                this.switchScene();
+            },
+
+            switchScene() {
+                const config = GameState.difficultyConfig[GameState.difficulty];
+                
+                // 确保数值在难度范围内
+                if (GameState.leftDenominator > config.denominator) {
+                    GameState.leftDenominator = config.denominator;
+                }
+                if (GameState.leftNumerator > config.maxNumerator) {
+                    GameState.leftNumerator = config.maxNumerator;
+                }
+                if (GameState.rightDenominator > config.denominator) {
+                    GameState.rightDenominator = config.denominator;
+                }
+                if (GameState.rightNumerator > config.maxNumerator) {
+                    GameState.rightNumerator = config.maxNumerator;
+                }
+            },
+
+            bindEvents() {
+                const canvas = GameState.canvas;
+
+                canvas.addEventListener('mousedown', (e) => this.handleStart(e.clientX, e.clientY));
+                canvas.addEventListener('mousemove', (e) => this.handleMove(e.clientX, e.clientY));
+                canvas.addEventListener('mouseup', () => this.handleEnd());
+                canvas.addEventListener('mouseleave', () => this.handleEnd());
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleStart(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleMove(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.handleEnd();
+                });
+            },
+
+            handleStart(x, y) {
+                const rect = GameState.canvas.getBoundingClientRect();
+                const mouseX = x - rect.left;
+                const mouseY = y - rect.top;
+
+                const { leftNumerator, leftDenominator, rightNumerator, rightDenominator, mode } = GameState;
+                const config = GameState.difficultyConfig[GameState.difficulty];
+
+                // 检查左侧
+                const leftArea = this.getSlotArea('left-numerator', leftDenominator, mouseX, mouseY, config);
+                if (leftArea) {
+                    GameState.isDragging = true;
+                    GameState.dragType = 'left-numerator';
+                    GameState.dragStartY = mouseY;
+                    AudioEngine.playSlide();
+                }
+
+                const leftDenomArea = this.getSlotArea('left-denominator', leftDenominator, mouseX, mouseY, config);
+                if (leftDenomArea) {
+                    GameState.isDragging = true;
+                    GameState.dragType = 'left-denominator';
+                    GameState.dragStartY = mouseY;
+                    AudioEngine.playSlide();
+                }
+
+                // 检查右侧
+                const rightArea = this.getSlotArea('right-numerator', rightNumerator, mouseX, mouseY, config);
+                if (rightArea) {
+                    GameState.isDragging = true;
+                    GameState.dragType = 'right-numerator';
+                    GameState.dragStartY = mouseY;
+                    AudioEngine.playSlide();
+                }
+
+                const rightDenomArea = this.getSlotArea('right-denominator', rightDenominator, mouseX, mouseY, config);
+                if (rightDenomArea) {
+                    GameState.isDragging = true;
+                    GameState.dragType = 'right-denominator';
+                    GameState.dragStartY = mouseY;
+                    AudioEngine.playSlide();
+                }
+
+                if (mode === 'learn') {
+                    HintSystem.setState('mode.learn', true);
+                } else {
+                    HintSystem.setState('mode.compare', true);
+                }
+            },
+
+            getSlotArea(type, value, mouseX, mouseY, config) {
+                const centerX = GameState.width / 2;
+                const centerY = GameState.height * 0.5;
+                const slotWidth = 150;
+                const slotHeight = 100;
+                const gap = 20;
+
+                if (type === 'left-numerator') {
+                    return mouseX >= centerX - slotWidth - gap && mouseX <= centerX - gap &&
+                           mouseY >= centerY - slotHeight / 2 - gap &&
+                           mouseY <= centerY + slotHeight / 2 + gap;
+                }
+                if (type === 'left-denominator') {
+                    return mouseX >= centerX - gap && mouseX <= centerX + gap &&
+                           mouseY >= centerY + slotHeight / 4 &&
+                           mouseY <= centerY + slotHeight * 3 / 4;
+                }
+                if (type === 'right-numerator') {
+                    return mouseX >= centerX + gap && mouseX <= centerX + slotWidth &&
+                           mouseY >= centerY - slotHeight / 2 - gap &&
+                           mouseY <= centerY + slotHeight / 2 + gap;
+                }
+                if (type === 'right-denominator') {
+                    return mouseX >= centerX - gap && mouseX <= centerX + gap &&
+                           mouseY >= centerY + slotHeight / 4 &&
+                           mouseY <= centerY + slotHeight * 3 / 4;
+                }
+                return false;
+            },
+
+            handleMove(x, y) {
+                if (!GameState.isDragging || GameState.mode !== 'learn') return;
+
+                const { dragType, leftNumerator, leftDenominator } = GameState;
+
+                const rect = GameState.canvas.getBoundingClientRect();
+                const mouseX = x - rect.left;
+                const mouseY = y - rect.top;
+                const config = GameState.difficultyConfig[GameState.difficulty];
+
+                const maxNumerator = config.maxNumerator;
+
+                if (dragType === 'left-numerator') {
+                    const newNumerator = Math.max(1, Math.min(maxNumerator, Math.round((mouseY - 100) / 20)));
+                    if (newNumerator !== leftNumerator) {
+                        GameState.leftNumerator = newNumerator;
+                    }
+                } else if (dragType === 'left-denominator') {
+                    const newDenominator = Math.max(2, Math.min(config.denominator, Math.round((mouseX - 300) / 20)));
+                    if (newDenominator !== leftDenominator) {
+                        leftDenominator = newDenominator;
+                        // 确保分子不超过分母
+                        if (leftNumerator >= newDenominator) {
+                            leftNumerator = newDenominator - 1;
+                        }
+                    }
+                }
+            },
+
+            handleEnd() {
+                if (GameState.isDragging) {
+                    GameState.isDragging = false;
+                    GameState.dragType = null;
+                    AudioEngine.playSnap();
+                }
+            },
+
+            setMode(mode) {
+                GameState.mode = mode;
+                
+                document.getElementById('learn-mode-btn').classList.toggle('active', mode === 'learn');
+                document.getElementById('compare-mode-btn').classList.toggle('active', mode === 'compare');
+
+                if (mode === 'learn') {
+                    document.getElementById('comparison-panel').classList.remove('visible');
+                    HintSystem.setState('mode.learn');
+                } else {
+                    document.getElementById('comparison-panel').classList.add('visible');
+                    HintSystem.setState('mode.compare');
+                    this.performComparison();
+                }
+            },
+
+            setDifficulty(level) {
+                GameState.difficulty = level;
+
+                document.getElementById('difficulty-easy').classList.toggle('active', level === 'easy');
+                document.getElementById('difficulty-medium').classList.toggle('active', level === 'medium');
+                document.getElementById('difficulty-hard').classList.toggle('active', level === 'hard');
+
+                this.switchScene();
+                HintSystem.setState(`difficulty.${level}`, true);
+            },
+
+            performComparison() {
+                const left = GameState.leftNumerator / GameState.leftDenominator;
+                const right = GameState.rightNumerator / GameState.rightDenominator;
+                const diff = left - right;
+
+                const leftEl = document.getElementById('compare-left');
+                const rightEl = document.getElementById('compare-right');
+                const operatorEl = document.getElementById('compare-operator');
+                const resultEl = document.getElementById('comparison-result');
+
+                leftEl.textContent = `${GameState.leftNumerator}/${GameState.leftDenominator}`;
+                rightEl.textContent = `${GameState.rightNumerator}/${GameState.rightDenominator}`;
+
+                const tolerance = 0.0001; // 浮点比较精度
+
+                if (Math.abs(diff) < tolerance) {
+                    operatorEl.textContent = '=';
+                    resultEl.textContent = '🎉 完全相等！';
+                    resultEl.className = 'result equal';
+                    HintSystem.setState('result.equal');
+                    
+                    // 比较正确，奖励星星
+                    if (!this.hasRewarded) {
+                        this.hasRewarded = true;
+                        GameState.stars++;
+                        document.getElementById('starCount').textContent = GameState.stars;
+                        localStorage.setItem('totalStars', GameState.stars.toString());
+                        AudioEngine.playComplete();
+                        this.showReward('比较成功！');
+                    }
+                } else if (diff > 0) {
+                    operatorEl.textContent = '>';
+                    const ratio = Math.abs(diff / right * 100).toFixed(0);
+                    resultEl.textContent = `左边大 ${ratio}%`;
+                    resultEl.className = 'result greater';
+                    HintSystem.setState('result.greater');
+                } else {
+                    operatorEl.textContent = '<';
+                    const ratio = Math.abs(diff / left * 100).toFixed(0);
+                    resultEl.textContent = `右边大 ${ratio}%`;
+                    resultEl.className = 'result less';
+                    HintSystem.setState('result.less');
+                }
+            },
+
+            toggleHint() {
+                HintSystem.renderHint();
+            },
+
+            closeHint() {
+                HintSystem.close();
+            },
+
+            showReward(text) {
+                const overlay = document.getElementById('reward-overlay');
+                document.getElementById('reward-text').textContent = text;
+                overlay.style.display = 'flex';
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                    container.appendChild(star);
+                }
+            },
+
+            loadStars() {
+                const stars = localStorage.getItem('totalStars') || '0';
+                GameState.stars = parseInt(stars);
+                document.getElementById('starCount').textContent = GameState.stars;
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                this.drawBackground(ctx, width, height);
+                this.drawFractionCard(ctx, width, height, 'left');
+                this.drawFractionCard(ctx, width, height, 'right');
+            },
+
+            drawBackground(ctx, width, height) {
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#1a1a3e');
+                gradient.addColorStop(0.5, '#2a2a5e');
+                gradient.addColorStop(1, '#3a3a7e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+            },
+
+            drawFractionCard(ctx, width, height, side) {
+                const centerX = width / 2;
+                const centerY = height * 0.5;
+                const cardWidth = 300;
+                const cardHeight = 200;
+
+                let offsetX = side === 'left' ? -350 : 50;
+
+                const { numerator, denominator, mode } = GameState;
+                const isLeft = side === 'left';
+
+                // 绘制卡片背景
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.fillRect(centerX + offsetX, centerY - cardHeight / 2, cardWidth, cardHeight);
+                
+                // 绘制边框
+                ctx.strokeStyle = isLeft ? 'rgba(255, 215, 0, 0.5)' : 'rgba(102, 126, 234, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(centerX + offsetX, centerY - cardHeight / 2, cardWidth, cardHeight);
+
+                // 绘制标题
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(isLeft ? '🍕 分披萨' : '🍫 分巧克力', centerX + offsetX + cardWidth / 2, centerY - cardHeight / 2 + 30);
+
+                // 绘制大分数
+                ctx.fillStyle = '#764ba2';
+                ctx.font = 'bold 64px Arial';
+                ctx.fillText(`${numerator}/${denominator}`, centerX + offsetX + cardWidth / 2, centerY + 20);
+
+                // 绘制条形图
+                const scene = GameState.difficulty === 'easy' ? 'pizza' : 'chocolate';
+                const totalBars = denominator;
+                const barWidth = cardWidth / (totalBars + 1);
+                const startX = centerX + offsetX + 20;
+                const startY = centerY + 80;
+
+                const colors = scene === 'pizza' ? 
+                    FRACTION_COLORS.pizza : 
+                    FRACTION_COLORS.chocolate;
+
+                for (let i = 1; i <= totalBars; i++) {
+                    const x = startX + (i - 1) * (barWidth + 10);
+                    const isSelected = isLeft && i <= numerator;
+
+                    // 绘制条
+                    ctx.fillStyle = isSelected ? colors.slice1 : colors.base;
+                    ctx.fillRect(x, startY, barWidth, 30);
+
+                    // 绘制编号
+                    ctx.fillStyle = isSelected ? colors.secondary : '#fff';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(i, x + barWidth / 2, startY + 15);
+                }
+
+                // 绘制"你的份数"提示
+                const parts = Math.floor(numerator / denominator * totalBars);
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Arial';
+                ctx.fillText(`你拥有 ${parts} / ${totalBars} 份`, centerX + offsetX + cardWidth / 2, startY + 140);
+            },
+
+            showReward(text) {
+                const overlay = document.getElementById('reward-overlay');
+                document.getElementById('reward-text').textContent = text;
+                overlay.style.display = 'flex';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            game.init();
+        });
+    </script>
+</body>
+</html>

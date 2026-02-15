@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>💪 力与运动 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        /* 场景切换按钮 */
+        #scene-switch {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .scene-btn {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .scene-btn:hover {
+            background: rgba(26, 84, 144, 0.8);
+            transform: scale(1.05);
+        }
+
+        .scene-btn.active {
+            background: rgba(155, 89, 182, 0.9);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 拔河控制面板 */
+        #tug-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            z-index: 100;
+        }
+
+        .team-control {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .team-control h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .control-row label {
+            color: white;
+            font-size: 14px;
+            min-width: 60px;
+        }
+
+        .control-row input[type="range"] {
+            width: 120px;
+            cursor: pointer;
+        }
+
+        .control-row .value {
+            color: #ffd700;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .control-row button {
+            padding: 8px 16px;
+            background: rgba(155, 89, 182, 0.8);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .control-row button:hover {
+            background: rgba(155, 89, 182, 1);
+            transform: scale(1.05);
+        }
+
+        /* 推箱子控制面板 */
+        #push-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+        }
+
+        #push-controls h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .push-control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 12px 0;
+        }
+
+        .push-control-row label {
+            color: white;
+            font-size: 14px;
+            min-width: 80px;
+        }
+
+        .push-control-row input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .push-control-row .value {
+            color: #ffd700;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .push-control-row select {
+            padding: 8px 12px;
+            background: rgba(155, 89, 182, 0.8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .push-button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .push-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        /* 完成奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: text-fade 1s ease-out 0.3s both;
+        }
+
+        @keyframes text-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+            animation: text-fade 1s ease-out 0.6s both;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+            animation: text-fade 1s ease-out 0.9s both;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        #loading .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>💪 正在准备力与运动实验...</p>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 动态提示 -->
+        <div id="hint">🌟 选择一个场景开始探索力的奥秘！</div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.reset()">🔄 重新开始</button>
+            <button class="control-btn" onclick="game.showHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 场景切换 -->
+        <div id="scene-switch">
+            <button class="scene-btn active" id="btn-tug" onclick="game.switchScene('tug')">🎮 拔河比赛</button>
+            <button class="scene-btn" id="btn-push" onclick="game.switchScene('push')">📦 推箱子</button>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- 拔河控制面板 -->
+    <div id="tug-controls">
+        <div class="team-control">
+            <h3>🔵 蓝队</h3>
+            <div class="control-row">
+                <label>人数:</label>
+                <input type="range" id="blue-people" min="1" max="5" value="2" oninput="game.updateTugSettings()">
+                <span class="value" id="blue-people-value">2</span>
+            </div>
+            <div class="control-row">
+                <label>力量:</label>
+                <input type="range" id="blue-force" min="50" max="200" value="100" oninput="game.updateTugSettings()">
+                <span class="value" id="blue-force-value">100</span>
+            </div>
+        </div>
+        <div class="team-control">
+            <h3>🔴 红队</h3>
+            <div class="control-row">
+                <label>人数:</label>
+                <input type="range" id="red-people" min="1" max="5" value="2" oninput="game.updateTugSettings()">
+                <span class="value" id="red-people-value">2</span>
+            </div>
+            <div class="control-row">
+                <label>力量:</label>
+                <input type="range" id="red-force" min="50" max="200" value="100" oninput="game.updateTugSettings()">
+                <span class="value" id="red-force-value">100</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 推箱子控制面板 -->
+    <div id="push-controls">
+        <h3>📦 推箱子实验</h3>
+        <div class="push-control-row">
+            <label>推力:</label>
+            <input type="range" id="push-force" min="0" max="300" value="100" oninput="game.updatePushSettings()">
+            <span class="value" id="push-force-value">100 N</span>
+        </div>
+        <div class="push-control-row">
+            <label>摩擦系数:</label>
+            <input type="range" id="friction" min="0.1" max="0.9" step="0.1" value="0.3" oninput="game.updatePushSettings()">
+            <span class="value" id="friction-value">0.3</span>
+        </div>
+        <div class="push-control-row">
+            <label>表面:</label>
+            <select id="surface-type" onchange="game.updateSurface()">
+                <option value="ice">❄️ 冰面 (μ=0.1)</option>
+                <option value="wood" selected>🪵 木板 (μ=0.3)</option>
+                <option value="sand">🏖️ 沙地 (μ=0.5)</option>
+                <option value="carpet">🧶 地毯 (μ=0.7)</option>
+                <option value="rubber">🏐 橡胶 (μ=0.9)</option>
+            </select>
+        </div>
+        <div style="text-align: center; margin-top: 15px;">
+            <button class="push-button" onclick="game.pushBox()">💨 推！</button>
+        </div>
+    </div>
+
+    <!-- 完成奖励层 -->
+    <div id="reward-overlay">
+        <div id="medal">🏅</div>
+        <div id="reward-text">力与运动大师</div>
+        <div id="reward-stats">
+            实验次数: <span id="experimentCount">0</span><br>
+            总星星: <span id="totalStars">0</span>
+        </div>
+        <button id="restart-btn" onclick="game.restart()">继续实验</button>
+    </div>
+
+    <!-- 加载失败提示 -->
+    <div id="loading-error" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231, 76, 60, 0.9); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 1000;">
+        <h2>❌ 加载失败</h2>
+        <p>请刷新页面重试</p>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; background: white; color: #e74c3c;">刷新页面</button>
+    </div>
+
+    <script>
+        // 超时检测
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                loadingEl.style.display = 'none';
+                document.getElementById('loading-error').style.display = 'block';
+                console.error('加载超时');
+            }
+        }, 10000);
+    </script>
+
+    <script>
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            currentScene: 'tug', // 'tug' 或 'push'
+
+            // 拔河状态
+            tug: {
+                blueTeam: {
+                    people: 2,
+                    forcePerPerson: 100,
+                    totalForce: 200
+                },
+                redTeam: {
+                    people: 2,
+                    forcePerPerson: 100,
+                    totalForce: 200
+                },
+                ropePosition: 0, // 相对于中心的位置
+                ropeSpeed: 0,
+                won: false,
+                winner: null
+            },
+
+            // 推箱子状态
+            push: {
+                boxPosition: 0,
+                boxVelocity: 0,
+                appliedForce: 100,
+                frictionCoefficient: 0.3,
+                surfaceName: '木板',
+                boxMass: 50, // kg
+                isPushing: false
+            },
+
+            // 游戏统计
+            experimentCount: 0,
+            currentStars: 0,
+            totalStars: 0,
+
+            // 画布
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playTugSound() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 150;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.3);
+            },
+
+            playWinSound() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            },
+
+            playPushSound() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 200;
+                oscillator.type = 'triangle';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.4);
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 创建星星
+                this.createStars();
+
+                // 加载总星数
+                this.loadStars();
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
+                }, 800);
+
+                // 开始渲染
+                this.startRenderLoop();
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+            },
+
+            switchScene(scene) {
+                GameState.currentScene = scene;
+
+                // 更新按钮状态
+                document.getElementById('btn-tug').classList.toggle('active', scene === 'tug');
+                document.getElementById('btn-push').classList.toggle('active', scene === 'push');
+
+                // 切换控制面板
+                document.getElementById('tug-controls').style.display = scene === 'tug' ? 'flex' : 'none';
+                document.getElementById('push-controls').style.display = scene === 'push' ? 'block' : 'none';
+
+                // 更新提示
+                if (scene === 'tug') {
+                    document.getElementById('hint').textContent = '🎮 拔河比赛：调整双方人数和力量，看看谁能赢！';
+                } else {
+                    document.getElementById('hint').textContent = '📦 推箱子：选择表面，调节摩擦力，然后推箱子！';
+                }
+            },
+
+            updateTugSettings() {
+                const bluePeople = parseInt(document.getElementById('blue-people').value);
+                const blueForce = parseInt(document.getElementById('blue-force').value);
+                const redPeople = parseInt(document.getElementById('red-people').value);
+                const redForce = parseInt(document.getElementById('red-force').value);
+
+                document.getElementById('blue-people-value').textContent = bluePeople;
+                document.getElementById('blue-force-value').textContent = blueForce;
+                document.getElementById('red-people-value').textContent = redPeople;
+                document.getElementById('red-force-value').textContent = redForce;
+
+                GameState.tug.blueTeam.people = bluePeople;
+                GameState.tug.blueTeam.forcePerPerson = blueForce;
+                GameState.tug.blueTeam.totalForce = bluePeople * blueForce;
+
+                GameState.tug.redTeam.people = redPeople;
+                GameState.tug.redTeam.forcePerPerson = redForce;
+                GameState.tug.redTeam.totalForce = redPeople * redForce;
+
+                // 如果比赛已结束，重置
+                if (GameState.tug.won) {
+                    this.resetTug();
+                }
+
+                AudioEngine.playTugSound();
+            },
+
+            updatePushSettings() {
+                const pushForce = parseInt(document.getElementById('push-force').value);
+                const friction = parseFloat(document.getElementById('friction').value);
+
+                document.getElementById('push-force-value').textContent = pushForce + ' N';
+                document.getElementById('friction-value').textContent = friction.toFixed(1);
+
+                GameState.push.appliedForce = pushForce;
+                GameState.push.frictionCoefficient = friction;
+            },
+
+            updateSurface() {
+                const surface = document.getElementById('surface-type').value;
+                const frictionValues = {
+                    ice: 0.1,
+                    wood: 0.3,
+                    sand: 0.5,
+                    carpet: 0.7,
+                    rubber: 0.9
+                };
+
+                const surfaceNames = {
+                    ice: '冰面',
+                    wood: '木板',
+                    sand: '沙地',
+                    carpet: '地毯',
+                    rubber: '橡胶'
+                };
+
+                const friction = frictionValues[surface];
+                GameState.push.frictionCoefficient = friction;
+                GameState.push.surfaceName = surfaceNames[surface];
+
+                // 更新滑块
+                document.getElementById('friction').value = friction;
+                document.getElementById('friction-value').textContent = friction.toFixed(1);
+
+                AudioEngine.playTugSound();
+            },
+
+            pushBox() {
+                if (GameState.push.isPushing) return;
+
+                GameState.push.isPushing = true;
+                AudioEngine.playPushSound();
+
+                GameState.experimentCount++;
+                document.getElementById('experimentCount').textContent = GameState.experimentCount;
+
+                // 计算加速度
+                const appliedForce = GameState.push.appliedForce;
+                const frictionForce = GameState.push.frictionCoefficient * GameState.push.boxMass * 9.8;
+                const netForce = appliedForce - frictionForce;
+
+                if (netForce <= 0) {
+                    // 摩擦力太大，推不动
+                    document.getElementById('hint').textContent = '⚠️ 摩擦力太大，推不动！试试增加推力或减少摩擦力！';
+                    setTimeout(() => {
+                        GameState.push.isPushing = false;
+                        document.getElementById('hint').textContent = '📦 推箱子：选择表面，调节摩擦力，然后推箱子！';
+                    }, 2000);
+                } else {
+                    // 可以推动
+                    const acceleration = netForce / GameState.push.boxMass;
+                    document.getElementById('hint').textContent = `💨 箱子开始移动！加速度 = ${acceleration.toFixed(1)} m/s²`;
+
+                    // 模拟推动过程
+                    let pushTime = 0;
+                    const pushInterval = setInterval(() => {
+                        pushTime += 16; // ms
+
+                        if (pushTime >= 2000) { // 推2秒
+                            clearInterval(pushInterval);
+                            GameState.push.isPushing = false;
+
+                            // 奖励检查
+                            if (GameState.push.boxPosition > 300) {
+                                GameState.currentStars++;
+                                GameState.totalStars++;
+                                document.getElementById('starCount').textContent = GameState.currentStars;
+
+                                localStorage.setItem('totalStars', GameState.totalStars.toString());
+                                document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                                AudioEngine.playWinSound();
+                                this.showReward();
+                            } else {
+                                document.getElementById('hint').textContent = '📦 推箱子：选择表面，调节摩擦力，然后推箱子！';
+                            }
+                        }
+                    }, 16);
+                }
+            },
+
+            resetTug() {
+                GameState.tug.ropePosition = 0;
+                GameState.tug.ropeSpeed = 0;
+                GameState.tug.won = false;
+                GameState.tug.winner = null;
+            },
+
+            reset() {
+                if (GameState.currentScene === 'tug') {
+                    this.resetTug();
+                } else {
+                    GameState.push.boxPosition = 0;
+                    GameState.push.boxVelocity = 0;
+                    GameState.push.isPushing = false;
+                    document.getElementById('hint').textContent = '📦 推箱子：选择表面，调节摩擦力，然后推箱子！';
+                }
+            },
+
+            showHint() {
+                if (GameState.currentScene === 'tug') {
+                    alert('💡 拔河比赛提示：\n\n力 = 人数 × 每人力量\n\n总力更大的一方会获胜！\n\n例如：\n- 蓝队：3人，每人100N = 300N\n- 红队：2人，每人150N = 300N\n- 如果力量相等，绳子会保持平衡！');
+                } else {
+                    alert('💡 推箱子提示：\n\n摩擦力 = 摩擦系数 × 正压力\n\n加速度 = (推力 - 摩擦力) ÷ 质量\n\n要推动箱子，推力必须大于摩擦力！\n\n光滑的表面（如冰面）摩擦系数小，容易推动；粗糙的表面（如橡胶）摩擦系数大，需要更大的推力！');
+                }
+            },
+
+            restart() {
+                document.getElementById('reward-overlay').style.display = 'none';
+                this.reset();
+            },
+
+            loadStars() {
+                const totalStars = localStorage.getItem('totalStars') || '0';
+                GameState.totalStars = parseInt(totalStars);
+                document.getElementById('totalStars').textContent = totalStars;
+            },
+
+            showReward() {
+                const overlay = document.getElementById('reward-overlay');
+                overlay.style.display = 'flex';
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                    container.appendChild(star);
+                }
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.update();
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            update() {
+                if (GameState.currentScene === 'tug') {
+                    this.updateTug();
+                } else {
+                    this.updatePush();
+                }
+            },
+
+            updateTug() {
+                if (GameState.tug.won) return;
+
+                const blueForce = GameState.tug.blueTeam.totalForce;
+                const redForce = GameState.tug.redTeam.totalForce;
+                const netForce = blueForce - redForce;
+
+                // 计算加速度（绳子质量假设为10kg）
+                const ropeMass = 10;
+                const acceleration = netForce / ropeMass;
+
+                // 更新速度和位置
+                GameState.tug.ropeSpeed += acceleration * 0.05;
+                GameState.tug.ropeSpeed *= 0.98; // 阻尼
+                GameState.tug.ropePosition += GameState.tug.ropeSpeed * 0.05;
+
+                // 检查胜负
+                if (GameState.tug.ropePosition > 200) {
+                    GameState.tug.won = true;
+                    GameState.tug.winner = 'red';
+                    document.getElementById('hint').textContent = '🔴 红队获胜！调整人数和力量再来一次！';
+
+                    GameState.experimentCount++;
+                    GameState.currentStars++;
+                    GameState.totalStars++;
+                    document.getElementById('experimentCount').textContent = GameState.experimentCount;
+                    document.getElementById('starCount').textContent = GameState.currentStars;
+                    localStorage.setItem('totalStars', GameState.totalStars.toString());
+                    document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                    AudioEngine.playWinSound();
+                    setTimeout(() => this.showReward(), 1000);
+                } else if (GameState.tug.ropePosition < -200) {
+                    GameState.tug.won = true;
+                    GameState.tug.winner = 'blue';
+                    document.getElementById('hint').textContent = '🔵 蓝队获胜！调整人数和力量再来一次！';
+
+                    GameState.experimentCount++;
+                    GameState.currentStars++;
+                    GameState.totalStars++;
+                    document.getElementById('experimentCount').textContent = GameState.experimentCount;
+                    document.getElementById('starCount').textContent = GameState.currentStars;
+                    localStorage.setItem('totalStars', GameState.totalStars.toString());
+                    document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                    AudioEngine.playWinSound();
+                    setTimeout(() => this.showReward(), 1000);
+                }
+            },
+
+            updatePush() {
+                if (!GameState.push.isPushing) return;
+
+                const appliedForce = GameState.push.appliedForce;
+                const frictionForce = GameState.push.frictionCoefficient * GameState.push.boxMass * 9.8;
+                const netForce = appliedForce - frictionForce;
+
+                if (netForce > 0) {
+                    const acceleration = netForce / GameState.push.boxMass;
+                    GameState.push.boxVelocity += acceleration * 0.05;
+                    GameState.push.boxPosition += GameState.push.boxVelocity * 0.05;
+
+                    // 速度衰减（空气阻力）
+                    GameState.push.boxVelocity *= 0.995;
+
+                    // 边界检查
+                    if (GameState.push.boxPosition > 500) {
+                        GameState.push.boxPosition = 500;
+                        GameState.push.boxVelocity = 0;
+                    }
+                }
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                if (GameState.currentScene === 'tug') {
+                    this.renderTug(ctx, width, height);
+                } else {
+                    this.renderPush(ctx, width, height);
+                }
+            },
+
+            renderTug(ctx, width, height) {
+                // 背景 - 草地
+                ctx.fillStyle = '#90EE90';
+                ctx.fillRect(0, height * 0.7, width, height * 0.3);
+
+                // 天空
+                const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.7);
+                skyGradient.addColorStop(0, '#87CEEB');
+                skyGradient.addColorStop(1, '#E0F7FA');
+                ctx.fillStyle = skyGradient;
+                ctx.fillRect(0, 0, width, height * 0.7);
+
+                // 中心线
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 10]);
+                ctx.beginPath();
+                ctx.moveTo(width / 2, height * 0.4);
+                ctx.lineTo(width / 2, height * 0.8);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 绳子
+                const ropeStartX = width / 2 - 300;
+                const ropeEndX = width / 2 + 300;
+                const ropeY = height * 0.5;
+
+                // 绘制绳子（带波浪效果表示张力）
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(ropeStartX, ropeY);
+
+                const tension = GameState.tug.ropePosition / 200;
+                const waveAmplitude = Math.abs(tension) * 10;
+
+                for (let x = ropeStartX; x <= ropeEndX; x += 5) {
+                    const waveOffset = Math.sin((x - ropeStartX) / 20) * waveAmplitude;
+                    const curveOffset = Math.pow((x - width / 2) / 300, 2) * GameState.tug.ropePosition;
+                    ctx.lineTo(x, ropeY + waveOffset + curveOffset);
+                }
+
+                ctx.stroke();
+
+                // 中心标记
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(width / 2 + GameState.tug.ropePosition, ropeY, 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 绘制队伍
+                this.drawTeam(ctx, width, height, 'blue', GameState.tug.blueTeam);
+                this.drawTeam(ctx, width, height, 'red', GameState.tug.redTeam);
+
+                // 显示总力
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+
+                ctx.fillText(`🔵 ${GameState.tug.blueTeam.people}人 × ${GameState.tug.blueTeam.forcePerPerson}N = ${GameState.tug.blueTeam.totalForce}N`,
+                    width * 0.25, height * 0.35);
+                ctx.fillText(`🔴 ${GameState.tug.redTeam.people}人 × ${GameState.tug.redTeam.forcePerPerson}N = ${GameState.tug.redTeam.totalForce}N`,
+                    width * 0.75, height * 0.35);
+
+                // 速度表
+                const speedX = width / 2;
+                const speedY = height * 0.25;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.beginPath();
+                ctx.roundRect(speedX - 80, speedY - 30, 160, 60, 15);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('速度', speedX, speedY - 10);
+
+                const speed = Math.abs(GameState.tug.ropeSpeed).toFixed(1);
+                const speedColor = speed > 5 ? '#e74c3c' : (speed > 2 ? '#f39c12' : '#27ae60');
+                ctx.fillStyle = speedColor;
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText(`${speed} m/s`, speedX, speedY + 15);
+            },
+
+            drawTeam(ctx, width, height, team, teamData) {
+                const isLeft = team === 'blue';
+                const baseX = isLeft ? width * 0.2 : width * 0.8;
+                const baseY = height * 0.5;
+
+                const teamColor = team === 'blue' ? '#3498db' : '#e74c3c';
+
+                // 绘制人
+                for (let i = 0; i < teamData.people; i++) {
+                    const offsetX = isLeft ? i * 50 : -i * 50;
+                    const x = baseX + offsetX;
+                    const y = baseY + i * 5;
+
+                    // 身体
+                    ctx.fillStyle = teamColor;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y + 20, 20, 30, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 头
+                    ctx.fillStyle = '#FDBF6F';
+                    ctx.beginPath();
+                    ctx.arc(x, y - 20, 18, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 眼睛
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.beginPath();
+                    ctx.arc(isLeft ? x - 5 : x + 5, y - 22, 3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 手臂（抓绳子）
+                    ctx.strokeStyle = teamColor;
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(isLeft ? x + 40 : x - 40, y);
+                    ctx.stroke();
+                }
+            },
+
+            renderPush(ctx, width, height) {
+                // 背景
+                const surfaceColors = {
+                    ice: '#E8F4F8',
+                    wood: '#DEB887',
+                    sand: '#F4A460',
+                    carpet: '#CD853F',
+                    rubber: '#2c3e50'
+                };
+
+                const surfaceColor = surfaceColors[document.getElementById('surface-type').value];
+
+                // 地面
+                ctx.fillStyle = surfaceColor;
+                ctx.fillRect(0, height * 0.6, width, height * 0.4);
+
+                // 距离标记
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                for (let i = 0; i <= 5; i++) {
+                    const x = 100 + i * 100;
+                    ctx.fillText(`${i}m`, x, height * 0.65);
+                    ctx.beginPath();
+                    ctx.moveTo(x, height * 0.68);
+                    ctx.lineTo(x, height * 0.72);
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // 箱子
+                const boxSize = 80;
+                const boxX = 100 + GameState.push.boxPosition;
+                const boxY = height * 0.6 - boxSize;
+
+                // 箱子阴影
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(boxX + 5, boxY + 5, boxSize, boxSize);
+
+                // 箱子
+                const boxGradient = ctx.createLinearGradient(boxX, boxY, boxX + boxSize, boxY + boxSize);
+                boxGradient.addColorStop(0, '#e67e22');
+                boxGradient.addColorStop(1, '#d35400');
+                ctx.fillStyle = boxGradient;
+                ctx.fillRect(boxX, boxY, boxSize, boxSize);
+
+                // 箱子边框
+                ctx.strokeStyle = '#A0522D';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(boxX, boxY, boxSize, boxSize);
+
+                // 箱子标签
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${GameState.push.boxMass}kg`, boxX + boxSize / 2, boxY + boxSize / 2 + 5);
+
+                // 人推箱子
+                ctx.fillStyle = '#FDBF6F';
+                ctx.beginPath();
+                ctx.arc(boxX - 30, boxY + 20, 18, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 身体
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.ellipse(boxX - 30, boxY + 50, 15, 25, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 推的手臂
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(boxX - 30, boxY + 40);
+                ctx.lineTo(boxX - 5, boxY + 40);
+                ctx.stroke();
+
+                // 推力箭头
+                if (GameState.push.isPushing) {
+                    const arrowX = boxX - 60;
+                    const arrowY = boxY + 40;
+
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.beginPath();
+                    ctx.moveTo(arrowX, arrowY);
+                    ctx.lineTo(arrowX + 40, arrowY);
+                    ctx.lineTo(arrowX + 30, arrowY - 10);
+                    ctx.lineTo(arrowX + 40, arrowY);
+                    ctx.lineTo(arrowX + 30, arrowY + 10);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${GameState.push.appliedForce}N`, arrowX + 20, arrowY - 15);
+                }
+
+                // 信息面板
+                const panelX = 50;
+                const panelY = 100;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.beginPath();
+                ctx.roundRect(panelX, panelY, 250, 180, 15);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('📊 实时数据', panelX + 20, panelY + 30);
+
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(`表面: ${GameState.push.surfaceName}`, panelX + 20, panelY + 60);
+                ctx.fillText(`摩擦系数: ${GameState.push.frictionCoefficient.toFixed(1)}`, panelX + 20, panelY + 85);
+                ctx.fillText(`摩擦力: ${(GameState.push.frictionCoefficient * GameState.push.boxMass * 9.8).toFixed(1)} N`, panelX + 20, panelY + 110);
+                ctx.fillText(`推力: ${GameState.push.appliedForce} N`, panelX + 20, panelY + 135);
+
+                const netForce = GameState.push.appliedForce - GameState.push.frictionCoefficient * GameState.push.boxMass * 9.8;
+                const netForceColor = netForce > 0 ? '#27ae60' : '#e74c3c';
+                ctx.fillStyle = netForceColor;
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`净力: ${netForce.toFixed(1)} N`, panelX + 20, panelY + 160);
+
+                // 速度和位置
+                const speedPanelX = width - 280;
+                const speedPanelY = 100;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.beginPath();
+                ctx.roundRect(speedPanelX, speedPanelY, 250, 100, 15);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('🚀 运动状态', speedPanelX + 20, speedPanelY + 30);
+
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(`位置: ${(GameState.push.boxPosition / 100).toFixed(1)} m`, speedPanelX + 20, speedPanelY + 60);
+
+                const velocity = GameState.push.boxVelocity.toFixed(1);
+                const velocityColor = Math.abs(velocity) > 5 ? '#e74c3c' : (Math.abs(velocity) > 2 ? '#f39c12' : '#27ae60');
+                ctx.fillStyle = velocityColor;
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`速度: ${velocity} m/s`, speedPanelX + 20, speedPanelY + 85);
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，开始初始化游戏...');
+            try {
+                game.init();
+                console.log('游戏初始化成功！');
+            } catch (error) {
+                console.error('游戏初始化失败:', error);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                document.getElementById('loading-error').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

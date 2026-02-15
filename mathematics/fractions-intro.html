@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🍕 分数入门 - MJ 科学实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a3e 0%, #2a2a5e 50%, #3a3a7e 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 星星背景 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 动态提示框 */
+        #hint {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 控制面板 */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(26, 84, 144, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(26, 84, 144, 1);
+            transform: scale(1.05);
+        }
+
+        .control-btn.active {
+            background: rgba(76, 175, 80, 0.8);
+            border-color: rgba(76, 175, 80, 1);
+        }
+
+        /* 场景选择按钮 */
+        .scene-selector {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .scene-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .scene-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .scene-btn.active {
+            background: rgba(255, 215, 0, 0.3);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        /* 星星计数器 */
+        #star-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 信息面板 */
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            max-width: 300px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #info-panel h3 {
+            color: #ffd700;
+            margin-bottom: 12px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #info-panel .fraction-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        #info-panel .fraction-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+
+        /* 挑战面板 */
+        #challenge-panel {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 20px;
+            z-index: 100;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            min-width: 300px;
+            display: none;
+        }
+
+        #challenge-panel h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        #challenge-target {
+            font-size: 36px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* 完成奖励层 */
+        #reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #medal {
+            font-size: 120px;
+            animation: medal-pop 0.6s ease-out, medal-glow 2s infinite;
+        }
+
+        @keyframes medal-pop {
+            0% { transform: scale(0) rotate(-180deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes medal-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px #ffd700); }
+            50% { filter: drop-shadow(0 0 30px #ffd700); }
+        }
+
+        #reward-text {
+            color: #ffd700;
+            font-size: 36px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: text-fade 1s ease-out 0.3s both;
+        }
+
+        @keyframes text-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reward-stats {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 15px;
+            text-align: center;
+            animation: text-fade 1s ease-out 0.6s both;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+            animation: text-fade 1s ease-out 0.9s both;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        #loading .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>🍕 正在准备分数学习...</p>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 星星计数器 -->
+        <div id="star-counter">⭐ <span id="starCount">0</span></div>
+
+        <!-- 动态提示 -->
+        <div id="hint">🍕 选择场景开始学习分数！</div>
+
+        <!-- 控制按钮 -->
+        <div id="controls">
+            <button class="control-btn" onclick="game.toggleChallenge()" id="challenge-btn">🎯 挑战模式</button>
+            <button class="control-btn" onclick="game.showHint()">💡 显示提示</button>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- 场景选择 -->
+        <div id="scene-selector">
+            <button class="scene-btn active" onclick="game.setScene('pizza')" id="pizza-btn">🍕 分披萨</button>
+            <button class="scene-btn" onclick="game.setScene('chocolate')" id="chocolate-btn">🍫 分巧克力</button>
+        </div>
+
+        <!-- 信息面板 -->
+        <div id="info-panel">
+            <h3 id="info-title">🍕 分披萨</h3>
+            <div class="fraction-display" id="fraction-display">1/2</div>
+            <div class="fraction-desc" id="fraction-desc">披萨被平均分成 2 等份</div>
+        </div>
+
+        <!-- 挑战面板 -->
+        <div id="challenge-panel">
+            <h3>🎯 挑战目标</h3>
+            <div id="challenge-target">达到: 1/2</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%;">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成奖励层 -->
+    <div id="reward-overlay">
+        <div id="medal">🏅</div>
+        <div id="reward-text">分数大师</div>
+        <div id="reward-stats">
+            挑战完成: <span id="challengeCount">0</span><br>
+            总星星: <span id="totalStars">0</span>
+        </div>
+        <button id="restart-btn" onclick="game.restart()">继续学习</button>
+    </div>
+
+    <script>
+        // ==================== 游戏状态 ====================
+
+        const GameState = {
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+
+            // 当前场景
+            currentScene: 'pizza', // 'pizza' 或 'chocolate'
+
+            // 分数数据
+            numerator: 1,    // 分子
+            denominator: 2,  // 分母
+
+            // 拖拽数据
+            isDragging: false,
+            dragType: null,      // 'numerator' 或 'denominator'
+            dragStartY: 0,
+
+            // 场景配置
+            scenes: {
+                pizza: {
+                    totalParts: 8,
+                    emoji: '🍕',
+                    name: '分披萨',
+                    baseColor: '#f4a460',
+                    secondaryColor: '#e67e22',
+                    descriptions: {
+                        '1/8': '披萨被切成 8 小块',
+                        '1/4': '披萨被切成 4 等份',
+                        '1/2': '披萨被切成 2 等份（最受欢迎！）',
+                        '3/8': '披萨被分成 8 等份，你拿了 3 块',
+                        '1/3': '披萨被分成 3 等份',
+                        '2/3': '披萨被分成 3 等份，你拿了 2 块'
+                    },
+                    hints: {
+                        '1/8': '💡 提示：将 8 个小块中的 1 块涂色',
+                        '1/4': '💡 提示：将 4 个等份中的 1 个涂色',
+                        '1/2': '💡 提示：将披萨切成 2 半圆，涂色其中一半'
+                    }
+                },
+                chocolate: {
+                    totalBars: 8,
+                    emoji: '🍫',
+                    name: '分巧克力',
+                    baseColor: '#8B4513',
+                    secondaryColor: '#D2691E',
+                    descriptions: {
+                        '1/8': '8 条巧克力，你拿了 1 条',
+                        '1/4': '4 等份，你拿了 1 等份',
+                        '1/2': '把巧克力分成 2 份',
+                        '3/8': '8 条巧克力，你拿了 3 条',
+                        '1/3': '分成 3 份，你拿了 1 份',
+                        '2/3': '分成 3 份，你拿了 2 份'
+                    },
+                    hints: {
+                        '1/8': '💡 提示：从 8 条中选 1 条涂色',
+                        '1/4': '💡 提示：从 4 组中选 1 组涂色',
+                        '1/2': '💡 提示：将巧克力条分成 2 堆，选其中一堆'
+                    }
+                }
+            },
+
+            // 挑战模式
+            isChallengeMode: false,
+            currentChallenge: null,
+            challengeCompleted: false,
+
+            // 游戏统计
+            challengeCount: 0,
+            currentStars: 0,
+            totalStars: 0
+        };
+
+        // ==================== 挑战数据 ====================
+
+        const CHALLENGES = [
+            { target: '1/8', hint: '最小的分数！' },
+            { target: '1/4', hint: '四分之一，也很小！' },
+            { target: '1/3', hint: '三分之一，加油！' },
+            { target: '1/2', hint: '二分之一，最常见！' },
+            { target: '2/3', hint: '三分之二，很大了！' },
+            { target: '3/4', hint: '四分之三，接近满分！' },
+            { target: '5/8', hint: '八分之五，快满分了！' },
+            { target: '7/8', hint: '八分之七，就差一点！' }
+        ];
+
+        const COLORS = ['#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#e67e22'];
+
+        // ==================== 动态提示系统 ====================
+
+        const HintSystem = {
+            state: 'welcome',
+            hints: {
+                welcome: '🍕 选择场景开始学习分数！',
+                dragging: '👆 拖拽分割条调整分数！',
+                challenge: '🎯 挑战模式：达到目标分数！',
+                complete: '🎉 太棒了！你学会了这个分数！'
+            },
+
+            setState(state) {
+                this.state = state;
+                this.renderHint();
+            },
+
+            renderHint() {
+                const hintEl = document.getElementById('hint');
+                hintEl.textContent = this.hints[this.state];
+                hintEl.style.animation = 'none';
+                hintEl.offsetHeight;
+                hintEl.style.animation = 'fadeIn 0.3s ease-in';
+            }
+        };
+
+        // ==================== 音效引擎 ====================
+
+        const AudioEngine = {
+            audioContext: null,
+
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            playSlide() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.15);
+            },
+
+            playSnap() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.frequency.value = 600;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.2);
+            },
+
+            playComplete() {
+                if (!this.audioContext) return;
+
+                const ctx = this.audioContext;
+                [523, 659, 784, 1047].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                    }, index * 120);
+                });
+            }
+        };
+
+        // ==================== 核心游戏类 ====================
+
+        const Game = {
+            init() {
+                GameState.canvas = document.getElementById('game-canvas');
+                GameState.ctx = GameState.canvas.getContext('2d');
+
+                // 绑定音频初始化
+                document.addEventListener('click', () => {
+                    if (!AudioEngine.audioContext) {
+                        AudioEngine.init();
+                    }
+                }, { once: true });
+
+                // 响应窗口
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 绑定事件
+                this.bindEvents();
+
+                // 创建星星
+                this.createStars();
+
+                // 加载总星数
+                this.loadStars();
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
+                }, 800);
+
+                // 开始渲染
+                this.startRenderLoop();
+            },
+
+            resizeCanvas() {
+                const canvas = GameState.canvas;
+                GameState.width = window.innerWidth;
+                GameState.height = window.innerHeight;
+
+                canvas.width = GameState.width;
+                canvas.height = GameState.height;
+            },
+
+            bindEvents() {
+                const canvas = GameState.canvas;
+
+                canvas.addEventListener('mousedown', (e) => this.handleStart(e.clientX, e.clientY));
+                canvas.addEventListener('mousemove', (e) => this.handleMove(e.clientX, e.clientY));
+                canvas.addEventListener('mouseup', () => this.handleEnd());
+                canvas.addEventListener('mouseleave', () => this.handleEnd());
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleStart(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.handleMove(touch.clientX, touch.clientY);
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.handleEnd();
+                });
+            },
+
+            handleStart(x, y) {
+                const canvas = GameState.canvas;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = x - rect.left;
+                const mouseY = y - rect.top;
+
+                // 检查是否点击了分割条
+                const barArea = this.getBarArea();
+                if (mouseY >= barArea.top && mouseY <= barArea.bottom) {
+                    // 找到点击的是分子还是分母分割条
+                    const barWidth = barArea.width / 2;
+                    if (mouseX >= barArea.left && mouseX < barArea.left + barWidth) {
+                        // 分子分割条
+                        GameState.isDragging = true;
+                        GameState.dragType = 'numerator';
+                        GameState.dragStartY = mouseY;
+                        HintSystem.setState('dragging');
+                        AudioEngine.playSlide();
+                    } else {
+                        // 分母分割条
+                        GameState.isDragging = true;
+                        GameState.dragType = 'denominator';
+                        GameState.dragStartY = mouseY;
+                        HintSystem.setState('dragging');
+                        AudioEngine.playSlide();
+                    }
+                }
+            },
+
+            handleMove(x, y) {
+                if (!GameState.isDragging) return;
+
+                const canvas = GameState.canvas;
+                const rect = canvas.getBoundingClientRect();
+                const mouseY = y - rect.top;
+                const barArea = this.getBarArea();
+                const totalBars = GameState.scenes[GameState.currentScene].totalParts;
+                const halfBars = Math.floor(totalBars / 2);
+
+                if (GameState.dragType === 'numerator') {
+                    // 分子：限制在 1 到 totalBars-1 之间
+                    const barWidth = barArea.width / 2;
+                    const barSpacing = barArea.width / totalBars;
+                    const newPosition = Math.max(1, Math.min(totalBars - 1,
+                        Math.round((mouseX - barArea.left) / barSpacing)
+                    ));
+
+                    if (newPosition !== GameState.numerator) {
+                        GameState.numerator = newPosition;
+                        AudioEngine.playSlide();
+                        this.updateInfo();
+                    }
+                } else {
+                    // 分母：限制在 2 到 totalBars 之间
+                    const barWidth = barArea.width / 2;
+                    const barSpacing = barArea.width / totalBars;
+                    const startPosition = halfBars;
+                    const newPosition = Math.max(halfBars, Math.min(totalBars - 1,
+                        Math.round((mouseX - (barArea.left + barWidth)) / barSpacing)
+                    ));
+
+                    if (newPosition !== GameState.denominator) {
+                        GameState.denominator = newPosition;
+                        AudioEngine.playSlide();
+                        this.updateInfo();
+                    }
+                }
+            },
+
+            handleEnd() {
+                if (GameState.isDragging) {
+                    GameState.isDragging = false;
+                    GameState.dragType = null;
+                    GameState.dragStartY = 0;
+                    AudioEngine.playSnap();
+                    HintSystem.setState('complete');
+                    this.checkChallenge();
+                }
+            },
+
+            setScene(scene) {
+                if (scene === GameState.currentScene) return;
+
+                GameState.currentScene = scene;
+                GameState.numerator = Math.floor(GameState.scenes[scene].totalParts / 2);
+                GameState.denominator = GameState.scenes[scene].totalParts;
+
+                // 更新按钮状态
+                document.querySelectorAll('.scene-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`${scene}-btn`).classList.add('active');
+
+                // 更新信息面板
+                this.updateInfo();
+
+                // 更新提示
+                HintSystem.setState('welcome');
+            },
+
+            updateInfo() {
+                const scene = GameState.scenes[GameState.currentScene];
+                const { numerator, denominator } = GameState;
+
+                document.getElementById('info-title').textContent = `${scene.emoji} ${scene.name}`;
+                document.getElementById('fraction-display').textContent = `${numerator}/${denominator}`;
+
+                // 检查是否有描述
+                const key = `${numerator}/${denominator}`;
+                if (scene.descriptions[key]) {
+                    document.getElementById('fraction-desc').textContent = scene.descriptions[key];
+                } else {
+                    document.getElementById('fraction-desc').textContent = `你拥有 ${numerator} / 总共 ${denominator} 份`;
+                }
+            },
+
+            getBarArea() {
+                const canvas = GameState.canvas;
+                return {
+                    top: canvas.height * 0.6,
+                    bottom: canvas.height * 0.6 + 60,
+                    left: canvas.width * 0.1,
+                    right: canvas.width * 0.9
+                };
+            },
+
+            startRenderLoop() {
+                const render = () => {
+                    this.render();
+                    requestAnimationFrame(render);
+                };
+                render();
+            },
+
+            render() {
+                const ctx = GameState.ctx;
+                const width = GameState.width;
+                const height = GameState.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                this.drawBackground(ctx, width, height);
+                this.drawScene(ctx, width, height);
+                this.drawBars(ctx, width, height);
+                this.drawInfo(ctx);
+            },
+
+            drawBackground(ctx, width, height) {
+                // 背景渐变
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#2c3e50');
+                gradient.addColorStop(1, '#1a252f');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+            },
+
+            drawScene(ctx, width, height) {
+                const scene = GameState.scenes[GameState.currentScene];
+                const centerX = width / 2;
+                const centerY = height * 0.35;
+
+                // 绘制场景（披萨或巧克力）
+                if (GameState.currentScene === 'pizza') {
+                    this.drawPizza(ctx, centerX, centerY);
+                } else {
+                    this.drawChocolate(ctx, centerX, centerY);
+                }
+            },
+
+            drawPizza(ctx, x, y) {
+                const radius = Math.min(width, height) * 0.25;
+                const { numerator, denominator } = GameState;
+
+                // 绘制披萨饼图
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+                // 根据分数切割披萨
+                const sliceAngle = (numerator / denominator) * Math.PI * 2;
+
+                // 已选部分
+                ctx.moveTo(x, y);
+                ctx.arc(x, y, radius, -Math.PI / 2, -Math.PI / 2 + sliceAngle);
+                ctx.fillStyle = '#e74c3c';
+                ctx.fill();
+
+                // 未选部分
+                ctx.moveTo(x, y);
+                ctx.arc(x, y, radius, -Math.PI / 2 + sliceAngle, Math.PI * 2);
+                ctx.fillStyle = '#f4a460';
+                ctx.fill();
+
+                // 边框
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            },
+
+            drawChocolate(ctx, x, y) {
+                const { numerator, denominator, totalBars, baseColor, secondaryColor } = GameState.scenes.chocolate;
+                const barWidth = Math.min(width, height) * 0.5;
+                const barHeight = 20;
+                const barSpacing = 15;
+                const totalWidth = barWidth + (totalBars - 1) * barSpacing;
+                const startX = x - totalWidth / 2;
+                const startY = y - barHeight / 2;
+
+                // 绘制背景
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(startX - 20, startY - 40, totalWidth + 40, barHeight * 4 + 40);
+
+                // 绘制已选的巧克力条
+                for (let i = 0; i < totalBars; i++) {
+                    const barX = startX + i * barSpacing;
+
+                    // 绘制阴影
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fillRect(barX + 3, startY + 3, barWidth, barHeight);
+
+                    // 绘制巧克力条
+                    if (i < numerator) {
+                        ctx.fillStyle = baseColor;
+                    } else {
+                        ctx.fillStyle = '#8B4513'; // 未选的用深色
+                    }
+                    ctx.fillRect(barX, startY, barWidth, barHeight);
+
+                    // 边框
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(barX, startY, barWidth, barHeight);
+                }
+
+                // 绘制文字说明
+                ctx.fillStyle = '#D2691E';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`你的：${numerator} / 总共${denominator}`, x, startY + barHeight + 20);
+            },
+
+            drawBars(ctx, width, height) {
+                const barArea = this.getBarArea();
+                const { numerator, denominator } = GameState;
+                const totalBars = GameState.scenes[GameState.currentScene].totalParts;
+
+                // 绘制背景
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(barArea.left - 10, barArea.top - 10, barArea.width + 20, barArea.height + 20);
+
+                // 绘制说明文字
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('👆 拖拽滑块调整分子（上方）', barArea.left + barArea.width / 4, barArea.top - 30);
+
+                // 绘制分子分割条区域
+                const numBarWidth = barArea.width / 2;
+                const barSpacing = barArea.width / totalBars;
+
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(barArea.left, barArea.top, numBarWidth, barArea.height);
+
+                // 绘制分子刻度
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                for (let i = 1; i <= totalBars; i++) {
+                    const x = barArea.left + (i - 0.5) * barSpacing;
+                    ctx.fillText(i.toString(), x, barArea.top + barArea.height / 2 + 5);
+                }
+
+                // 绘制当前分子刻度
+                const currentX = barArea.left + (numerator - 0.5) * barSpacing;
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(currentX - barSpacing / 2 + 2, barArea.top + 5, barSpacing - 4, barArea.height - 10);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(numerator.toString(), currentX, barArea.top + barArea.height / 2 + 5);
+
+                // 绘制分母分割条区域
+                const denBarStart = barArea.left + numBarWidth;
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(denBarStart, barArea.top, numBarWidth, barArea.height);
+
+                // 绘制分母刻度
+                ctx.fillStyle = '#fff';
+                for (let i = 1; i <= totalBars; i++) {
+                    const x = denBarStart + (i - 0.5) * barSpacing;
+                    ctx.fillText(i.toString(), x, barArea.top + barArea.height / 2 + 5);
+                }
+
+                // 绘制当前分母刻度
+                const currentX = denBarStart + (denominator - 0.5) * barSpacing;
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(currentX - barSpacing / 2 + 2, barArea.top + 5, barSpacing - 4, barArea.height - 10);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(denominator.toString(), currentX, barArea.top + barArea.height / 2 + 5);
+            },
+
+            drawInfo(ctx) {
+                // 已经通过 DOM 更新，不需要在 canvas 绘制
+            },
+
+            createStars() {
+                const container = document.getElementById('game-container');
+
+                for (let i = 0; i < 60; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 70 + '%';
+
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                    container.appendChild(star);
+                }
+            },
+
+            loadStars() {
+                const totalStars = localStorage.getItem('totalStars') || '0';
+                GameState.totalStars = parseInt(totalStars);
+                document.getElementById('totalStars').textContent = totalStars;
+            },
+
+            toggleChallenge() {
+                const btn = document.getElementById('challenge-btn');
+                if (GameState.isChallengeMode) {
+                    // 退出挑战模式
+                    GameState.isChallengeMode = false;
+                    GameState.currentChallenge = null;
+                    GameState.challengeCompleted = false;
+                    btn.textContent = '🎯 挑战模式';
+                    document.getElementById('challenge-panel').style.display = 'none';
+                    HintSystem.setState('welcome');
+                } else {
+                    // 开始挑战
+                    this.startChallenge();
+                }
+            },
+
+            startChallenge() {
+                GameState.isChallengeMode = true;
+                GameState.challengeCompleted = false;
+
+                // 随机选择一个挑战
+                GameState.currentChallenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+
+                document.getElementById('challenge-btn').textContent = '🎯 挑战中';
+                document.getElementById('challenge-panel').style.display = 'block';
+                document.getElementById('challenge-target').textContent = `达到: ${GameState.currentChallenge.target}`;
+
+                this.updateInfo();
+                HintSystem.setState('challenge');
+            },
+
+            checkChallenge() {
+                if (!GameState.isChallengeMode || !GameState.currentChallenge) return;
+
+                const currentFraction = `${GameState.numerator}/${GameState.denominator}`;
+
+                if (currentFraction === GameState.currentChallenge.target && !GameState.challengeCompleted) {
+                    GameState.challengeCompleted = true;
+                    GameState.challengeCount++;
+                    GameState.currentStars++;
+                    GameState.totalStars++;
+
+                    document.getElementById('challengeCount').textContent = GameState.challengeCount;
+                    document.getElementById('starCount').textContent = GameState.currentStars;
+                    document.getElementById('totalStars').textContent = GameState.totalStars;
+
+                    // 保存到 localStorage
+                    localStorage.setItem('totalStars', GameState.totalStars.toString());
+
+                    setTimeout(() => {
+                        this.showReward();
+                    }, 800);
+                }
+            },
+
+            showHint() {
+                const scene = GameState.scenes[GameState.currentScene];
+                const currentFraction = `${GameState.numerator}/${GameState.denominator}`;
+                let hint = '';
+
+                if (scene.hints[currentFraction]) {
+                    hint = scene.hints[currentFraction];
+                } else {
+                    hint = `💡 提示：你拥有 ${GameState.numerator} / 总共 ${GameState.denominator} 份`;
+                }
+
+                alert(hint);
+            },
+
+            showReward() {
+                AudioEngine.playComplete();
+
+                const overlay = document.getElementById('reward-overlay');
+                overlay.style.display = 'flex';
+                HintSystem.setState('complete');
+            },
+
+            restart() {
+                document.getElementById('reward-overlay').style.display = 'none';
+
+                if (GameState.isChallengeMode) {
+                    this.startChallenge();
+                } else {
+                    // 重置当前分数
+                    const totalBars = GameState.scenes[GameState.currentScene].totalParts;
+                    GameState.numerator = Math.floor(totalBars / 2);
+                    GameState.denominator = totalBars;
+                    this.updateInfo();
+                    HintSystem.setState('welcome');
+                }
+            }
+        };
+
+        const game = Game;
+
+        window.addEventListener('load', () => {
+            game.init();
+        });
+    </script>
+</body>
+</html>

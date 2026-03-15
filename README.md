@@ -1,5 +1,5 @@
 # 🧪 MJ-Science - 互动科学实验平台
-
+> amorMJ 专属为了孩子们创作
 > 为一二年级孩子设计的互动式科学实验学习平台，基于 PhET Interactive Simulations 设计理念
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
